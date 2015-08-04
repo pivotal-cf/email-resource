@@ -8,9 +8,11 @@ import (
 
 func main() {
 	var outdata struct {
-		Version time.Time `json:"version"`
+		Version struct {
+			Time time.Time
+		} `json:"version"`
 	}
-	outdata.Version = time.Now().UTC()
+	outdata.Version.Time = time.Now().UTC()
 	outbytes, err := json.Marshal(outdata)
 	if err != nil {
 		panic(err)

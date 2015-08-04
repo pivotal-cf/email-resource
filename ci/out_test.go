@@ -18,9 +18,15 @@ var _ = Describe("Out", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		var outdata struct {
-			Version time.Time
+			Version struct {
+				Time time.Time
+			}
 		}
 		Expect(json.Unmarshal([]byte(output), &outdata)).To(Succeed())
-		Expect(outdata.Version).To(BeTemporally("~", time.Now(), 5*time.Second))
+		Expect(outdata.Version.Time).To(BeTemporally("~", time.Now(), 5*time.Second))
+
+		var untyped map[string]interface{}
+		Expect(json.Unmarshal([]byte(output), &untyped)).To(Succeed())
+		Expect(untyped).To(HaveKey("version"))
 	})
 })
