@@ -4,7 +4,7 @@ platform: linux
 image: docker:///golang#1.4
 
 inputs:
-  - name: email-resource
+  - name: email-resource-source
     path: go/src/github.com/pivotal-cf/email-resource
 
 run:
