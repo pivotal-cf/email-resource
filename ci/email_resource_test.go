@@ -1,0 +1,1 @@
+package email_resource_test

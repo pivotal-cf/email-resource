@@ -1,0 +1,11 @@
+---
+platform: linux
+
+image: docker:///golang#1.4
+
+inputs:
+  - name: email-resource
+    path: go/src/github.com/pivotal-cf/email-resource
+
+run:
+  path: go/src/github.com/pivotal-cf/email-resource/ci/unit-and-build.sh
