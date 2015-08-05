@@ -1,6 +1,4 @@
-#!/bin/bash
-
-set -e
+#!/bin/bash -exu
 
 export TMPDIR=/tmp
 export GOPATH=$PWD/go
