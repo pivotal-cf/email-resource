@@ -6,6 +6,11 @@
 	],
 	"Deps": [
 		{
+			"ImportPath": "bitbucket.org/chrj/smtpd",
+			"Comment": "null-33",
+			"Rev": "5f20925b9b440c14f2014dfe523f7a9e01068175"
+		},
+		{
 			"ImportPath": "github.com/onsi/ginkgo",
 			"Comment": "v1.2.0-8-g25380c6",
 			"Rev": "25380c62e61d3f90436be125b8127dbae578fdef"
