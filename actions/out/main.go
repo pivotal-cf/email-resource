@@ -6,10 +6,16 @@ import (
 	"io/ioutil"
 	"net/smtp"
 	"os"
+	"path/filepath"
 	"time"
 )
 
 func main() {
+	sourceRoot := os.Args[1]
+	if sourceRoot == "" {
+		fmt.Fprintf(os.Stderr, "expected path to build sources as first argument")
+		os.Exit(1)
+	}
 
 	var indata struct {
 		Source struct {
@@ -74,7 +80,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	subjectBytes, err := ioutil.ReadFile(indata.Params.Subject)
+	subjectBytes, err := ioutil.ReadFile(filepath.Join(sourceRoot, indata.Params.Subject))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, err.Error())
 		os.Exit(1)
@@ -82,7 +88,7 @@ func main() {
 
 	var bodyBytes []byte
 	if indata.Params.Body != "" {
-		bodyBytes, err = ioutil.ReadFile(indata.Params.Body)
+		bodyBytes, err = ioutil.ReadFile(filepath.Join(sourceRoot, indata.Params.Body))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, err.Error())
 			os.Exit(1)

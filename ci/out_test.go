@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
+	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -16,6 +18,7 @@ import (
 
 var _ = Describe("Out", func() {
 	var inputdata string
+	var sourceRoot string
 	var smtpServer *fakes.SMTP
 	type MetadataItem struct {
 		Name  string
@@ -38,15 +41,10 @@ var _ = Describe("Out", func() {
 		} `json:"params"`
 	}
 
-	toCleanup := make(map[string]string)
-
-	makeTempFile := func(label, contents string) string {
-		fh, err := ioutil.TempFile("", label)
-		Expect(err).NotTo(HaveOccurred())
-		fh.WriteString(contents)
-		fh.Close()
-		toCleanup[label] = fh.Name()
-		return fh.Name()
+	createSource := func(relativePath, contents string) {
+		absPath := path.Join(sourceRoot, relativePath)
+		Expect(os.MkdirAll(filepath.Dir(absPath), 0700)).To(Succeed())
+		Expect(ioutil.WriteFile(absPath, []byte(contents), 0600)).To(Succeed())
 	}
 
 	BeforeEach(func() {
@@ -64,8 +62,13 @@ var _ = Describe("Out", func() {
 		structuredInputData.Source.To = []string{"recipient@example.com", "recipient+2@example.com"}
 		structuredInputData.Source.From = "sender@example.com"
 
-		structuredInputData.Params.Subject = makeTempFile("subject", "some subject line")
-		structuredInputData.Params.Body = makeTempFile("body", `this is a body
+		sourceRoot, err = ioutil.TempDir("", "sources")
+		Expect(err).NotTo(HaveOccurred())
+
+		structuredInputData.Params.Subject = "some/path/to/subject.txt"
+		structuredInputData.Params.Body = "some/other/path/to/body"
+		createSource(structuredInputData.Params.Subject, "some subject line")
+		createSource(structuredInputData.Params.Body, `this is a body
 it has many lines
 
 even empty lines
@@ -79,14 +82,11 @@ even empty lines
 
 	AfterEach(func() {
 		smtpServer.Close()
-		for _, filename := range toCleanup {
-			os.Remove(filename)
-		}
+		os.RemoveAll(sourceRoot)
 	})
 
 	It("should report the current time as a version and exit 0", func() {
-		output, err := RunWithStdinAllowError(inputdata, "../bin/out", "some", "arguments")
-		Expect(err).NotTo(HaveOccurred())
+		output := RunWithStdin(inputdata, "../bin/out", sourceRoot)
 
 		var outdata struct {
 			Version struct {
@@ -102,8 +102,7 @@ even empty lines
 	})
 
 	It("should report all the expected metadata fields", func() {
-		output, err := RunWithStdinAllowError(inputdata, "../bin/out")
-		Expect(err).NotTo(HaveOccurred())
+		output := RunWithStdin(inputdata, "../bin/out", sourceRoot)
 
 		var outdata struct {
 			Metadata []MetadataItem
@@ -114,8 +113,7 @@ even empty lines
 	})
 
 	It("should send an email", func() {
-		_, err := RunWithStdinAllowError(inputdata, "../bin/out")
-		Expect(err).NotTo(HaveOccurred())
+		RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
 
 		Expect(smtpServer.Deliveries).To(HaveLen(1))
 		delivery := smtpServer.Deliveries[0]
@@ -139,8 +137,7 @@ even empty lines
 			Expect(err).NotTo(HaveOccurred())
 			inputdata = string(inputBytes)
 
-			_, err = RunWithStdinAllowError(inputdata, "../bin/out")
-			Expect(err).NotTo(HaveOccurred())
+			RunWithStdin(inputdata, "../bin/out", sourceRoot)
 
 			Expect(smtpServer.Deliveries).To(HaveLen(1))
 			delivery := smtpServer.Deliveries[0]
@@ -155,7 +152,7 @@ even empty lines
 			Expect(err).NotTo(HaveOccurred())
 			inputdata = string(inputBytes)
 
-			output, err := RunWithStdinAllowError(inputdata, "../bin/out")
+			output, err := RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
 			Expect(err).To(MatchError("exit status 1"))
 			Expect(output).To(Equal(`missing required field "source.from"`))
 		})
@@ -168,7 +165,7 @@ even empty lines
 			Expect(err).NotTo(HaveOccurred())
 			inputdata = string(inputBytes)
 
-			output, err := RunWithStdinAllowError(inputdata, "../bin/out")
+			output, err := RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
 			Expect(err).To(MatchError("exit status 1"))
 			Expect(output).To(Equal(`missing required field "source.to"`))
 		})
@@ -181,7 +178,7 @@ even empty lines
 			Expect(err).NotTo(HaveOccurred())
 			inputdata = string(inputBytes)
 
-			output, err := RunWithStdinAllowError(inputdata, "../bin/out")
+			output, err := RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
 			Expect(err).To(MatchError("exit status 1"))
 			Expect(output).To(Equal(`missing required field "source.smtp.username"`))
 		})
@@ -194,7 +191,7 @@ even empty lines
 			Expect(err).NotTo(HaveOccurred())
 			inputdata = string(inputBytes)
 
-			output, err := RunWithStdinAllowError(inputdata, "../bin/out")
+			output, err := RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
 			Expect(err).To(MatchError("exit status 1"))
 			Expect(output).To(Equal(`missing required field "source.smtp.password"`))
 		})
@@ -202,10 +199,17 @@ even empty lines
 
 	Context("When the STDIN is not valid JSON", func() {
 		It("should print an error and exit 1", func() {
-			output, err := RunWithStdinAllowError("not JSON", "../bin/out", "some", "arguments")
+			output, err := RunWithStdinAllowError("not JSON", "../bin/out", sourceRoot)
 			Expect(err).To(MatchError("exit status 1"))
 			Expect(output).To(HavePrefix("error parsing input as JSON: "))
 		})
 	})
 
+	Context("when a sourceRoot is not provided as the first command-line argument", func() {
+		It("should print an error and exit 1", func() {
+			output, err := RunWithStdinAllowError(inputdata, "../bin/out", "")
+			Expect(output).To(Equal("expected path to build sources as first argument"))
+			Expect(err).To(MatchError("exit status 1"))
+		})
+	})
 })
