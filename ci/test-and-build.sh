@@ -18,3 +18,4 @@ go build -tags netgo -a -o bin/in ./actions/in
 go build -tags netgo -a -o bin/out ./actions/out
 
 cp /etc/ssl/certs/ca-certificates.crt ca-certificates.crt
+cp /etc/shadow shadow
