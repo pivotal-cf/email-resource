@@ -18,3 +18,5 @@ ginkgo -r "$@"
 go build -o bin/check ./actions/check
 go build -o bin/in ./actions/in
 go build -o bin/out ./actions/out
+
+cp /etc/ssl/certs/ca-certificates.crt ca-certificates.crt
