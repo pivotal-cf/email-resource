@@ -6,7 +6,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -26,7 +25,7 @@ var _ = Describe("Out", func() {
 		Source struct {
 			SMTP struct {
 				Host     string `json:"host"`
-				Port     int    `json:"port"`
+				Port     string `json:"port"`
 				Username string `json:"username"`
 				Password string `json:"password"`
 			} `json:"smtp"`
@@ -54,8 +53,7 @@ var _ = Describe("Out", func() {
 		structuredInputData.Source.SMTP.Username = "some username"
 		structuredInputData.Source.SMTP.Password = "some password"
 		structuredInputData.Source.SMTP.Host = smtpServer.Host
-		structuredInputData.Source.SMTP.Port, err = strconv.Atoi(smtpServer.Port)
-		Expect(err).NotTo(HaveOccurred())
+		structuredInputData.Source.SMTP.Port = smtpServer.Port
 
 		structuredInputData.Source.To = []string{"recipient@example.com", "recipient+2@example.com"}
 		structuredInputData.Source.From = "sender@example.com"

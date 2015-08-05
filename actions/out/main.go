@@ -21,7 +21,7 @@ func main() {
 		Source struct {
 			SMTP struct {
 				Host     string
-				Port     int
+				Port     string
 				Username string
 				Password string
 			}
@@ -50,7 +50,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if indata.Source.SMTP.Port == 0 {
+	if indata.Source.SMTP.Port == "" {
 		fmt.Fprintf(os.Stderr, `missing required field "source.smtp.port"`)
 		os.Exit(1)
 	}
@@ -119,7 +119,7 @@ func main() {
 	messageData = append(messageData, bodyBytes...)
 
 	err = smtp.SendMail(
-		fmt.Sprintf("%s:%d", indata.Source.SMTP.Host, indata.Source.SMTP.Port),
+		fmt.Sprintf("%s:%s", indata.Source.SMTP.Host, indata.Source.SMTP.Port),
 		smtp.PlainAuth(
 			"",
 			indata.Source.SMTP.Username,
