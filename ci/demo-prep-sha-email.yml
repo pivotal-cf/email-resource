@@ -1,0 +1,15 @@
+---
+platform: linux
+
+image: docker:///golang#1.4
+
+inputs:
+  - name: email-resource-source
+
+run:
+  path: email-resource-source/ci/demo-prep-sha-email.sh
+
+params:
+  file_to_hash: email-resource-source/LICENSE
+  output_subject_file: generated-subject
+  output_body_file: generated-body

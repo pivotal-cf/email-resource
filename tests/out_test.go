@@ -12,14 +12,12 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	"github.com/pivotal-cf/email-resource/ci/fakes"
 )
 
 var _ = Describe("Out", func() {
 	var inputdata string
 	var sourceRoot string
-	var smtpServer *fakes.SMTP
+	var smtpServer *FakeSMTPServer
 	type MetadataItem struct {
 		Name  string
 		Value string
@@ -49,7 +47,7 @@ var _ = Describe("Out", func() {
 
 	BeforeEach(func() {
 		Run("go", "build", "-o", "../bin/out", "../actions/out")
-		smtpServer = fakes.NewSMTP()
+		smtpServer = NewFakeSMTPServer()
 		smtpServer.Boot()
 
 		var err error

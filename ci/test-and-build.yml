@@ -8,4 +8,4 @@ inputs:
     path: go/src/github.com/pivotal-cf/email-resource
 
 run:
-  path: go/src/github.com/pivotal-cf/email-resource/ci/unit-and-build.sh
+  path: go/src/github.com/pivotal-cf/email-resource/ci/test-and-build.sh

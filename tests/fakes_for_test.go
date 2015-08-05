@@ -1,4 +1,4 @@
-package fakes
+package email_resource_test
 
 import (
 	"net"
@@ -6,7 +6,7 @@ import (
 	"bitbucket.org/chrj/smtpd"
 )
 
-type SMTP struct {
+type FakeSMTPServer struct {
 	listener   net.Listener
 	server     *smtpd.Server
 	Deliveries []smtpd.Envelope
@@ -14,8 +14,8 @@ type SMTP struct {
 	Port       string
 }
 
-func NewSMTP() *SMTP {
-	return &SMTP{
+func NewFakeSMTPServer() *FakeSMTPServer {
+	return &FakeSMTPServer{
 		server: &smtpd.Server{
 			Hostname: "127.0.0.1:0",
 		},
@@ -23,14 +23,17 @@ func NewSMTP() *SMTP {
 	}
 }
 
-func (s *SMTP) Boot() {
+func (s *FakeSMTPServer) Boot() {
 	var err error
 	s.listener, err = net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		panic(err)
 	}
 
-	s.server.Handler = s.Handler
+	s.server.Handler = func(peer smtpd.Peer, env smtpd.Envelope) error {
+		s.Deliveries = append(s.Deliveries, env)
+		return nil
+	}
 
 	go s.server.Serve(s.listener)
 
@@ -43,15 +46,6 @@ func (s *SMTP) Boot() {
 	s.Port = port
 }
 
-func (s *SMTP) Handler(peer smtpd.Peer, env smtpd.Envelope) error {
-	s.Deliveries = append(s.Deliveries, env)
-	return nil
-}
-
-func (s *SMTP) Reset() {
-	s.Deliveries = []smtpd.Envelope{}
-}
-
-func (s *SMTP) Close() {
+func (s *FakeSMTPServer) Close() {
 	s.listener.Close()
 }
