@@ -15,8 +15,8 @@ go install github.com/onsi/ginkgo/ginkgo
 
 ginkgo -r "$@"
 
-go build -o bin/check ./actions/check
-go build -o bin/in ./actions/in
-go build -o bin/out ./actions/out
+go build -tags netgo -a -o bin/check ./actions/check
+go build -tags netgo -a -o bin/in ./actions/in
+go build -tags netgo -a -o bin/out ./actions/out
 
 cp /etc/ssl/certs/ca-certificates.crt ca-certificates.crt
