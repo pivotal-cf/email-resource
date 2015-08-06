@@ -21,7 +21,7 @@ var _ = Describe("Out", func() {
 		Name  string
 		Value string
 	}
-	var structuredInputData struct {
+	var inputs struct {
 		Source struct {
 			SMTP struct {
 				Host     string `json:"host"`
@@ -50,28 +50,28 @@ var _ = Describe("Out", func() {
 		smtpServer.Boot()
 
 		var err error
-		structuredInputData.Source.SMTP.Username = "some username"
-		structuredInputData.Source.SMTP.Password = "some password"
-		structuredInputData.Source.SMTP.Host = smtpServer.Host
-		structuredInputData.Source.SMTP.Port = smtpServer.Port
+		inputs.Source.SMTP.Username = "some username"
+		inputs.Source.SMTP.Password = "some password"
+		inputs.Source.SMTP.Host = smtpServer.Host
+		inputs.Source.SMTP.Port = smtpServer.Port
 
-		structuredInputData.Source.To = []string{"recipient@example.com", "recipient+2@example.com"}
-		structuredInputData.Source.From = "sender@example.com"
+		inputs.Source.To = []string{"recipient@example.com", "recipient+2@example.com"}
+		inputs.Source.From = "sender@example.com"
 
 		sourceRoot, err = ioutil.TempDir("", "sources")
 		Expect(err).NotTo(HaveOccurred())
 
-		structuredInputData.Params.Subject = "some/path/to/subject.txt"
-		structuredInputData.Params.Body = "some/other/path/to/body"
-		createSource(structuredInputData.Params.Subject, "some subject line")
-		createSource(structuredInputData.Params.Body, `this is a body
+		inputs.Params.Subject = "some/path/to/subject.txt"
+		inputs.Params.Body = "some/other/path/to/body"
+		createSource(inputs.Params.Subject, "some subject line")
+		createSource(inputs.Params.Body, `this is a body
 it has many lines
 
 even empty lines
 
 !`)
 
-		inputBytes, err := json.Marshal(structuredInputData)
+		inputBytes, err := json.Marshal(inputs)
 		Expect(err).NotTo(HaveOccurred())
 		inputdata = string(inputBytes)
 	})
@@ -128,8 +128,8 @@ even empty lines
 
 	Context("when the body is empty", func() {
 		It("should succeed and send a message with an empty body", func() {
-			structuredInputData.Params.Body = ""
-			inputBytes, err := json.Marshal(structuredInputData)
+			inputs.Params.Body = ""
+			inputBytes, err := json.Marshal(inputs)
 			Expect(err).NotTo(HaveOccurred())
 			inputdata = string(inputBytes)
 
@@ -143,8 +143,8 @@ even empty lines
 
 	Context("when the 'From' is empty", func() {
 		It("should print an error and exit 1", func() {
-			structuredInputData.Source.From = ""
-			inputBytes, err := json.Marshal(structuredInputData)
+			inputs.Source.From = ""
+			inputBytes, err := json.Marshal(inputs)
 			Expect(err).NotTo(HaveOccurred())
 			inputdata = string(inputBytes)
 
@@ -156,8 +156,8 @@ even empty lines
 
 	Context("when the 'To' is empty", func() {
 		It("should print an error and exit 1", func() {
-			structuredInputData.Source.To = nil
-			inputBytes, err := json.Marshal(structuredInputData)
+			inputs.Source.To = nil
+			inputBytes, err := json.Marshal(inputs)
 			Expect(err).NotTo(HaveOccurred())
 			inputdata = string(inputBytes)
 
@@ -169,8 +169,8 @@ even empty lines
 
 	Context("when the 'source.smtp.username' is empty", func() {
 		It("should print an error and exit 1", func() {
-			structuredInputData.Source.SMTP.Username = ""
-			inputBytes, err := json.Marshal(structuredInputData)
+			inputs.Source.SMTP.Username = ""
+			inputBytes, err := json.Marshal(inputs)
 			Expect(err).NotTo(HaveOccurred())
 			inputdata = string(inputBytes)
 
@@ -182,8 +182,8 @@ even empty lines
 
 	Context("when the 'source.smtp.password' is empty", func() {
 		It("should print an error and exit 1", func() {
-			structuredInputData.Source.SMTP.Password = ""
-			inputBytes, err := json.Marshal(structuredInputData)
+			inputs.Source.SMTP.Password = ""
+			inputBytes, err := json.Marshal(inputs)
 			Expect(err).NotTo(HaveOccurred())
 			inputdata = string(inputBytes)
 
@@ -206,6 +206,17 @@ even empty lines
 			output, err := RunWithStdinAllowError(inputdata, "../bin/out", "")
 			Expect(output).To(Equal("expected path to build sources as first argument"))
 			Expect(err).To(MatchError("exit status 1"))
+		})
+	})
+
+	Context("when the subject file is an absolute path", func() {
+		It("should succeed", func() {
+			var err error
+			inputs.Params.Subject, err = filepath.Abs(filepath.Join(sourceRoot, "some/path/to/subject.txt"))
+			Expect(err).NotTo(HaveOccurred())
+			inputBytes, _ := json.Marshal(inputs)
+
+			RunWithStdin(string(inputBytes), "../bin/out", sourceRoot)
 		})
 	})
 })

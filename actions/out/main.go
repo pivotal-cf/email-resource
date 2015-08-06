@@ -80,7 +80,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	subjectBytes, err := ioutil.ReadFile(filepath.Join(sourceRoot, indata.Params.Subject))
+	readSource := func(sourcePath string) ([]byte, error) {
+		if !filepath.IsAbs(sourcePath) {
+			sourcePath = filepath.Join(sourceRoot, sourcePath)
+		}
+
+		return ioutil.ReadFile(sourcePath)
+	}
+
+	subjectBytes, err := readSource(indata.Params.Subject)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, err.Error())
 		os.Exit(1)
@@ -88,7 +96,7 @@ func main() {
 
 	var bodyBytes []byte
 	if indata.Params.Body != "" {
-		bodyBytes, err = ioutil.ReadFile(filepath.Join(sourceRoot, indata.Params.Body))
+		bodyBytes, err = readSource(indata.Params.Body)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, err.Error())
 			os.Exit(1)
