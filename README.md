@@ -35,3 +35,45 @@ This is an output-only resource, so `check` and `in` actions are no-ops.
 
 * `subject`: *Required.* Path to plain text file containing the subject
 * `body`: *Required.* Path to file containing the email body.
+
+
+## Development
+To install a development-version of the resource, you currently need to update your Concourse deployment manifest.
+
+Under the `worker` job's `properties`, add this section:
+```
+      groundcrew:
+        resource_types:
+        - image: docker:///pcfseceng/email-resource
+          type: email
+        - image: /var/vcap/packages/archive_resource
+          type: archive
+        - image: /var/vcap/packages/cf_resource
+          type: cf
+        - image: /var/vcap/packages/docker_image_resource
+          type: docker-image
+        - image: /var/vcap/packages/git_resource
+          type: git
+        - image: /var/vcap/packages/s3_resource
+          type: s3
+        - image: /var/vcap/packages/semver_resource
+          type: semver
+        - image: /var/vcap/packages/time_resource
+          type: time
+        - image: /var/vcap/packages/tracker_resource
+          type: tracker
+        - image: /var/vcap/packages/pool_resource
+          type: pool
+        - image: /var/vcap/packages/vagrant_cloud_resource
+          type: vagrant-cloud
+        - image: /var/vcap/packages/github_release_resource
+          type: github-release
+        - image: /var/vcap/packages/bosh_io_release_resource
+          type: bosh-io-release
+        - image: /var/vcap/packages/bosh_io_stemcell_resource
+          type: bosh-io-stemcell
+        - image: /var/vcap/packages/bosh_deployment_resource
+          type: bosh-deployment
+```
+
+Note that all but the first item are built-in (and may therefore be out-of-date).
