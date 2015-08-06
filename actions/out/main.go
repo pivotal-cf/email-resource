@@ -7,6 +7,7 @@ import (
 	"net/smtp"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -123,7 +124,9 @@ func main() {
 		panic(err)
 	}
 
-	messageData := []byte("Subject: " + string(subjectBytes) + "\n")
+	var messageData []byte
+	messageData = append(messageData, []byte("To: "+strings.Join(indata.Source.To, ", ")+"\n")...)
+	messageData = append(messageData, []byte("Subject: "+string(subjectBytes)+"\n")...)
 	messageData = append(messageData, bodyBytes...)
 
 	err = smtp.SendMail(

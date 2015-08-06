@@ -117,6 +117,7 @@ even empty lines
 		Expect(delivery.Recipients).To(Equal([]string{"recipient@example.com", "recipient+2@example.com"}))
 
 		data := strings.Split(string(delivery.Data), "\n")
+		Expect(data).To(ContainElement("To: recipient@example.com, recipient+2@example.com"))
 		Expect(data).To(ContainElement("Subject: some subject line"))
 		Expect(string(delivery.Data)).To(ContainSubstring(`this is a body
 it has many lines
