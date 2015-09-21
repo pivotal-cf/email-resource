@@ -30,8 +30,9 @@ func main() {
 			To   []string
 		}
 		Params struct {
-			Subject string
-			Body    string
+			Subject       string
+			Body          string
+			SendEmptyBody bool `json:"send_empty_body"`
 		}
 	}
 
@@ -128,6 +129,12 @@ func main() {
 	messageData = append(messageData, []byte("To: "+strings.Join(indata.Source.To, ", ")+"\n")...)
 	messageData = append(messageData, []byte("Subject: "+string(subjectBytes)+"\n")...)
 	messageData = append(messageData, bodyBytes...)
+
+	if indata.Params.SendEmptyBody == false && len(bodyBytes) == 0 {
+		fmt.Fprintf(os.Stderr, "Message not sent because the message body is empty and send_empty_body parameter was set to false. Github readme: https://github.com/pivotal-cf/email-resource")
+		fmt.Printf("%s", []byte(outbytes))
+		return
+	}
 
 	err = smtp.SendMail(
 		fmt.Sprintf("%s:%s", indata.Source.SMTP.Host, indata.Source.SMTP.Port),

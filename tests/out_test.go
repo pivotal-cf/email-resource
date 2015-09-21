@@ -33,8 +33,9 @@ var _ = Describe("Out", func() {
 			From string   `json:"from"`
 		} `json:"source"`
 		Params struct {
-			Subject string `json:"subject"`
-			Body    string `json:"body"`
+			Subject       string `json:"subject"`
+			Body          string `json:"body"`
+			SendEmptyBody bool   `json:"send_empty_body"`
 		} `json:"params"`
 	}
 
@@ -128,17 +129,48 @@ even empty lines
 	})
 
 	Context("when the body is empty", func() {
-		It("should succeed and send a message with an empty body", func() {
+		BeforeEach(func() {
 			inputs.Params.Body = ""
-			inputBytes, err := json.Marshal(inputs)
-			Expect(err).NotTo(HaveOccurred())
-			inputdata = string(inputBytes)
+		})
 
-			RunWithStdin(inputdata, "../bin/out", sourceRoot)
+		Context("when the 'SendEmptyBody' parameter is true", func() {
+			BeforeEach(func() {
+				inputs.Params.SendEmptyBody = true
+			})
+			It("should succeed and send a message with an empty body", func() {
+				inputBytes, err := json.Marshal(inputs)
+				Expect(err).NotTo(HaveOccurred())
+				inputdata = string(inputBytes)
 
-			Expect(smtpServer.Deliveries).To(HaveLen(1))
-			delivery := smtpServer.Deliveries[0]
-			Expect(delivery.Data).To(HaveSuffix("Subject: some subject line\n"))
+				RunWithStdin(inputdata, "../bin/out", sourceRoot)
+
+				Expect(smtpServer.Deliveries).To(HaveLen(1))
+				delivery := smtpServer.Deliveries[0]
+				Expect(delivery.Data).To(HaveSuffix("Subject: some subject line\n"))
+			})
+		})
+		Context("when the 'SendEmptyBody' parameter is false", func() {
+			BeforeEach(func() {
+				inputs.Params.SendEmptyBody = false
+			})
+			It("should succeed and not send a message", func() {
+				inputBytes, err := json.Marshal(inputs)
+				Expect(err).NotTo(HaveOccurred())
+				inputdata = string(inputBytes)
+
+				RunWithStdin(inputdata, "../bin/out", sourceRoot)
+
+				Expect(smtpServer.Deliveries).To(HaveLen(0))
+			})
+
+			It("should print a message to stderr", func() {
+				inputBytes, err := json.Marshal(inputs)
+				Expect(err).NotTo(HaveOccurred())
+				inputdata = string(inputBytes)
+
+				output := RunWithStdin(inputdata, "../bin/out", sourceRoot)
+				Expect(output).To(ContainSubstring("Message not sent because the message body is empty and send_empty_body parameter was set to false. Github readme: https://github.com/pivotal-cf/email-resource"))
+			})
 		})
 	})
 

@@ -35,6 +35,7 @@ This is an output-only resource, so `check` and `in` actions are no-ops.
 
 * `subject`: *Required.* Path to plain text file containing the subject
 * `body`: *Required.* Path to file containing the email body.
+* `send_empty_body`: *Optional.* If true, send the email even if the body is empty (defaults to `false`).
 
 
 ## Development
