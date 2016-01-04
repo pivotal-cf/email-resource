@@ -14,11 +14,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/onsi/ginkgo/config"
-	"github.com/onsi/ginkgo/ginkgo/testsuite"
-	"github.com/onsi/ginkgo/internal/remote"
-	"github.com/onsi/ginkgo/reporters/stenographer"
-	"github.com/onsi/ginkgo/types"
+	"github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/ginkgo/config"
+	"github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/ginkgo/ginkgo/testsuite"
+	"github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/ginkgo/internal/remote"
+	"github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/ginkgo/reporters/stenographer"
+	"github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/ginkgo/types"
 )
 
 type TestRunner struct {
@@ -101,7 +101,7 @@ func (t *TestRunner) CompileTo(path string) error {
 	}
 
 	if fileExists(path) == false {
-		compiledFile := filepath.Join(t.Suite.Path, t.Suite. PackageName+".test")
+		compiledFile := filepath.Join(t.Suite.Path, t.Suite.PackageName+".test")
 		if fileExists(compiledFile) {
 			// seems like we are on an old go version that does not support the -o flag on go test
 			// move the compiled test file to the desired location by hand

@@ -1,19 +1,19 @@
 package specrunner_test
 
 import (
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/internal/specrunner"
-	"github.com/onsi/ginkgo/types"
-	. "github.com/onsi/gomega"
+	. "github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/ginkgo"
+	. "github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/ginkgo/internal/specrunner"
+	"github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/ginkgo/types"
+	. "github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/gomega"
 
-	"github.com/onsi/ginkgo/config"
-	"github.com/onsi/ginkgo/internal/codelocation"
-	"github.com/onsi/ginkgo/internal/containernode"
-	Failer "github.com/onsi/ginkgo/internal/failer"
-	"github.com/onsi/ginkgo/internal/leafnodes"
-	"github.com/onsi/ginkgo/internal/spec"
-	Writer "github.com/onsi/ginkgo/internal/writer"
-	"github.com/onsi/ginkgo/reporters"
+	"github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/ginkgo/config"
+	"github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/ginkgo/internal/codelocation"
+	"github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/ginkgo/internal/containernode"
+	Failer "github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/ginkgo/internal/failer"
+	"github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/ginkgo/internal/leafnodes"
+	"github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/ginkgo/internal/spec"
+	Writer "github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/ginkgo/internal/writer"
+	"github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/ginkgo/reporters"
 )
 
 var noneFlag = types.FlagTypeNone

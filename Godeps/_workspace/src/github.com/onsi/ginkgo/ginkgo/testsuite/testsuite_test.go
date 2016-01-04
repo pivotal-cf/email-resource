@@ -5,9 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/ginkgo/testsuite"
-	. "github.com/onsi/gomega"
+	. "github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/ginkgo"
+	. "github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/ginkgo/ginkgo/testsuite"
+	. "github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/gomega"
 )
 
 var _ = Describe("TestSuite", func() {

@@ -1,13 +1,13 @@
 package leafnodes_test
 
 import (
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/internal/leafnodes"
-	. "github.com/onsi/gomega"
+	. "github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/ginkgo"
+	. "github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/ginkgo/internal/leafnodes"
+	. "github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/gomega"
 
-	"github.com/onsi/ginkgo/internal/codelocation"
-	Failer "github.com/onsi/ginkgo/internal/failer"
-	"github.com/onsi/ginkgo/types"
+	"github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/ginkgo/internal/codelocation"
+	Failer "github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/ginkgo/internal/failer"
+	"github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/ginkgo/types"
 	"time"
 )
 

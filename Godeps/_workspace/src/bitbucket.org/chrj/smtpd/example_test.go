@@ -1,8 +1,8 @@
 package smtpd_test
 
 import (
-	"bitbucket.org/chrj/smtpd"
 	"errors"
+	"github.com/pivotal-cf/email-resource/Godeps/_workspace/src/bitbucket.org/chrj/smtpd"
 	"net/smtp"
 	"strings"
 )

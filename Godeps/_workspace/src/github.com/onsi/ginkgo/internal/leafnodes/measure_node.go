@@ -1,8 +1,8 @@
 package leafnodes
 
 import (
-	"github.com/onsi/ginkgo/internal/failer"
-	"github.com/onsi/ginkgo/types"
+	"github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/ginkgo/internal/failer"
+	"github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/ginkgo/types"
 	"reflect"
 )
 

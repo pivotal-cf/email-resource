@@ -4,8 +4,8 @@ import (
 	"math/rand"
 	"sort"
 
-	"github.com/onsi/ginkgo/internal/leafnodes"
-	"github.com/onsi/ginkgo/types"
+	"github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/ginkgo/internal/leafnodes"
+	"github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/ginkgo/types"
 )
 
 type subjectOrContainerNode struct {

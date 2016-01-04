@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/onsi/gomega/types"
+	"github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/gomega/types"
 )
 
 type Assertion struct {

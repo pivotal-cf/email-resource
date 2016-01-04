@@ -7,11 +7,11 @@ import (
 	"net/url"
 	"regexp"
 
-	"github.com/onsi/gomega/gbytes"
+	"github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/gomega/gbytes"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-	. "github.com/onsi/gomega/ghttp"
+	. "github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/ginkgo"
+	. "github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/gomega"
+	. "github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/gomega/ghttp"
 )
 
 var _ = Describe("TestServer", func() {

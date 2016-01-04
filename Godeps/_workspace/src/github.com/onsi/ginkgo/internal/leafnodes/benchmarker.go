@@ -6,7 +6,7 @@ import (
 
 	"sync"
 
-	"github.com/onsi/ginkgo/types"
+	"github.com/pivotal-cf/email-resource/Godeps/_workspace/src/github.com/onsi/ginkgo/types"
 )
 
 type benchmarker struct {

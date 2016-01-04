@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"bitbucket.org/chrj/smtpd"
+	"github.com/pivotal-cf/email-resource/Godeps/_workspace/src/bitbucket.org/chrj/smtpd"
 )
 
 var localhostCert = []byte(`-----BEGIN CERTIFICATE-----
