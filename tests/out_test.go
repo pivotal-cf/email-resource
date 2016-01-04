@@ -49,8 +49,11 @@ var _ = Describe("Out", func() {
 		Expect(ioutil.WriteFile(absPath, []byte(contents), 0600)).To(Succeed())
 	}
 
-	BeforeEach(func() {
+	BeforeSuite(func() {
 		Run("go", "build", "-o", "../bin/out", "../actions/out")
+	})
+
+	BeforeEach(func() {
 		smtpServer = NewFakeSMTPServer()
 		smtpServer.Boot()
 
@@ -135,6 +138,59 @@ even empty lines
 !`))
 	})
 
+	It("makes sure that all headers are separate by one newline", func() {
+		RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
+		Expect(smtpServer.Deliveries).To(HaveLen(1))
+		delivery := smtpServer.Deliveries[0]
+		Expect(delivery.Data).To(BeEquivalentTo(`To: recipient@example.com, recipient+2@example.com
+Subject: some subject line
+
+this is a body
+it has many lines
+
+even empty lines
+
+!
+`))
+
+	})
+
+	It("adds a extra newline between the last header and the body", func() {
+		RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
+		Expect(smtpServer.Deliveries).To(HaveLen(1))
+		delivery := smtpServer.Deliveries[0]
+		Expect(delivery.Data).To(ContainSubstring(`Subject: some subject line
+
+this is a body
+it has many lines
+
+even empty lines
+
+!`))
+
+	})
+
+	Context("when the subject has an extra newline", func() {
+		BeforeEach(func() {
+			createSource(inputs.Params.Subject, "some subject line\n\n")
+		})
+
+		It("strips the extra newline", func() {
+			RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
+			Expect(smtpServer.Deliveries).To(HaveLen(1))
+			delivery := smtpServer.Deliveries[0]
+			Expect(delivery.Data).To(ContainSubstring(`Subject: some subject line
+
+this is a body
+it has many lines
+
+even empty lines
+
+!`))
+
+		})
+	})
+
 	Context("when a headers file is provided", func() {
 		var headers string
 
@@ -163,6 +219,30 @@ it has many lines
 even empty lines
 
 !`))
+		})
+
+		Context("when a header has an extra newline", func() {
+			BeforeEach(func() {
+				headers = `Header-1: value-1
+Header-2: value-2
+Header-3: value-3
+
+
+`
+				createSource(inputs.Params.Headers, headers)
+			})
+
+			It("strips the extra newline", func() {
+				RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
+				Expect(smtpServer.Deliveries).To(HaveLen(1))
+				delivery := smtpServer.Deliveries[0]
+				Expect(delivery.Data).To(ContainSubstring(`Header-1: value-1
+Header-2: value-2
+Header-3: value-3
+Subject: some subject line
+
+`))
+			})
 		})
 	})
 

@@ -83,32 +83,35 @@ func main() {
 		os.Exit(1)
 	}
 
-	readSource := func(sourcePath string) ([]byte, error) {
+	readSource := func(sourcePath string) (string, error) {
 		if !filepath.IsAbs(sourcePath) {
 			sourcePath = filepath.Join(sourceRoot, sourcePath)
 		}
 
-		return ioutil.ReadFile(sourcePath)
+		bytes, err := ioutil.ReadFile(sourcePath)
+		return string(bytes), err
 	}
 
-	subjectBytes, err := readSource(indata.Params.Subject)
+	subject, err := readSource(indata.Params.Subject)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, err.Error())
 		os.Exit(1)
 	}
+	subject = strings.Trim(subject, "\n")
 
-	var headersBytes []byte
+	var headers string
 	if indata.Params.Headers != "" {
-		headersBytes, err = readSource(indata.Params.Headers)
+		headers, err = readSource(indata.Params.Headers)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, err.Error())
 			os.Exit(1)
 		}
+		headers = strings.Trim(headers, "\n")
 	}
 
-	var bodyBytes []byte
+	var body string
 	if indata.Params.Body != "" {
-		bodyBytes, err = readSource(indata.Params.Body)
+		body, err = readSource(indata.Params.Body)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, err.Error())
 			os.Exit(1)
@@ -128,7 +131,7 @@ func main() {
 	outdata.Version.Time = time.Now().UTC()
 	outdata.Metadata = []MetadataItem{
 		{Name: "smtp_host", Value: indata.Source.SMTP.Host},
-		{Name: "subject", Value: string(subjectBytes)},
+		{Name: "subject", Value: subject},
 	}
 	outbytes, err := json.Marshal(outdata)
 	if err != nil {
@@ -137,13 +140,15 @@ func main() {
 
 	var messageData []byte
 	messageData = append(messageData, []byte("To: "+strings.Join(indata.Source.To, ", ")+"\n")...)
-	messageData = append(messageData, []byte(string(headersBytes)+"\n")...)
-	messageData = append(messageData, []byte("Subject: "+string(subjectBytes)+"\n")...)
+	if headers != "" {
+		messageData = append(messageData, []byte(headers+"\n")...)
+	}
+	messageData = append(messageData, []byte("Subject: "+subject+"\n")...)
 
 	messageData = append(messageData, []byte("\n")...)
-	messageData = append(messageData, bodyBytes...)
+	messageData = append(messageData, []byte(body)...)
 
-	if indata.Params.SendEmptyBody == false && len(bodyBytes) == 0 {
+	if indata.Params.SendEmptyBody == false && len(body) == 0 {
 		fmt.Fprintf(os.Stderr, "Message not sent because the message body is empty and send_empty_body parameter was set to false. Github readme: https://github.com/pivotal-cf/email-resource")
 		fmt.Printf("%s", []byte(outbytes))
 		return
