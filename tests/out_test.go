@@ -21,7 +21,8 @@ var _ = Describe("Out", func() {
 		Name  string
 		Value string
 	}
-	var inputs struct {
+
+	type inputStruct struct {
 		Source struct {
 			SMTP struct {
 				Host     string `json:"host"`
@@ -36,8 +37,11 @@ var _ = Describe("Out", func() {
 			Subject       string `json:"subject"`
 			Body          string `json:"body"`
 			SendEmptyBody bool   `json:"send_empty_body"`
+			Headers       string `json:"headers"`
 		} `json:"params"`
 	}
+
+	var inputs inputStruct
 
 	createSource := func(relativePath, contents string) {
 		absPath := path.Join(sourceRoot, relativePath)
@@ -51,6 +55,7 @@ var _ = Describe("Out", func() {
 		smtpServer.Boot()
 
 		var err error
+		inputs = inputStruct{}
 		inputs.Source.SMTP.Username = "some username"
 		inputs.Source.SMTP.Password = "some password"
 		inputs.Source.SMTP.Host = smtpServer.Host
@@ -71,7 +76,9 @@ it has many lines
 even empty lines
 
 !`)
+	})
 
+	JustBeforeEach(func() {
 		inputBytes, err := json.Marshal(inputs)
 		Expect(err).NotTo(HaveOccurred())
 		inputdata = string(inputBytes)
@@ -128,6 +135,37 @@ even empty lines
 !`))
 	})
 
+	Context("when a headers file is provided", func() {
+		var headers string
+
+		BeforeEach(func() {
+			headers = `Header-1: value
+Header-2: value`
+
+			headersFilePath := "some/path/to/headers.txt"
+			createSource(headersFilePath, headers)
+			inputs.Params.Headers = headersFilePath
+		})
+
+		It("should add the headers to the email", func() {
+			RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
+
+			Expect(smtpServer.Deliveries).To(HaveLen(1))
+			delivery := smtpServer.Deliveries[0]
+
+			data := strings.Split(string(delivery.Data), "\n")
+			Expect(data).To(ContainElement("Header-1: value"))
+			Expect(data).To(ContainElement("Header-2: value"))
+			Expect(string(delivery.Data)).To(ContainSubstring(`
+this is a body
+it has many lines
+
+even empty lines
+
+!`))
+		})
+	})
+
 	Context("when the body is empty", func() {
 		BeforeEach(func() {
 			inputs.Params.Body = ""
@@ -146,7 +184,7 @@ even empty lines
 
 				Expect(smtpServer.Deliveries).To(HaveLen(1))
 				delivery := smtpServer.Deliveries[0]
-				Expect(delivery.Data).To(HaveSuffix("Subject: some subject line\n"))
+				Expect(delivery.Data).To(HaveSuffix("Subject: some subject line\n\n"))
 			})
 		})
 		Context("when the 'SendEmptyBody' parameter is false", func() {

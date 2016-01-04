@@ -33,6 +33,7 @@ func main() {
 			Subject       string
 			Body          string
 			SendEmptyBody bool `json:"send_empty_body"`
+			Headers       string
 		}
 	}
 
@@ -96,6 +97,15 @@ func main() {
 		os.Exit(1)
 	}
 
+	var headersBytes []byte
+	if indata.Params.Headers != "" {
+		headersBytes, err = readSource(indata.Params.Headers)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, err.Error())
+			os.Exit(1)
+		}
+	}
+
 	var bodyBytes []byte
 	if indata.Params.Body != "" {
 		bodyBytes, err = readSource(indata.Params.Body)
@@ -127,7 +137,10 @@ func main() {
 
 	var messageData []byte
 	messageData = append(messageData, []byte("To: "+strings.Join(indata.Source.To, ", ")+"\n")...)
+	messageData = append(messageData, []byte(string(headersBytes)+"\n")...)
 	messageData = append(messageData, []byte("Subject: "+string(subjectBytes)+"\n")...)
+
+	messageData = append(messageData, []byte("\n")...)
 	messageData = append(messageData, bodyBytes...)
 
 	if indata.Params.SendEmptyBody == false && len(bodyBytes) == 0 {
