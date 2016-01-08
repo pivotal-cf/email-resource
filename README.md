@@ -33,10 +33,19 @@ This is an output-only resource, so `check` and `in` actions are no-ops.
 
 #### Parameters
 
+* `headers`: *Optional.* Path to plain text file containing additional mail headers
 * `subject`: *Required.* Path to plain text file containing the subject
 * `body`: *Required.* Path to file containing the email body.
 * `send_empty_body`: *Optional.* If true, send the email even if the body is empty (defaults to `false`).
 
+#### HTML Email
+
+To send HTML email set the `headers` parameter to a file containing the following:
+
+```
+MIME-version: 1.0
+Content-Type: text/html; charset="UTF-8"
+```
 
 ## Development
 To install a development-version of the resource, you currently need to update your Concourse deployment manifest.
