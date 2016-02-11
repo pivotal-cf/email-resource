@@ -8,7 +8,8 @@ inputs:
 
 run:
   path: email-resource-source/ci/demo-prep-sha-email.sh
-
+outputs:
+  - name: email-out
 params:
   file_to_hash: email-resource-source/LICENSE
   output_subject_file: generated-subject
