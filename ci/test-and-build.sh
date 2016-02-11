@@ -3,7 +3,7 @@
 export TMPDIR=/tmp
 export GOPATH=$PWD/go
 export PATH=$GOPATH/bin:$PATH
-
+export INPUTDIR=$PWD/go
 pushd $GOPATH/src/github.com/pivotal-cf/email-resource
 
 export GOPATH=${PWD}/Godeps/_workspace:$GOPATH
@@ -19,5 +19,5 @@ go build -tags netgo -a -o bin/out ./actions/out
 
 popd
 cp /etc/ssl/certs/ca-certificates.crt test-and-build-docker-resource/ca-certificates.crt
-cp -r $GOPATH/src/github.com/pivotal-cf/email-resource/bin test-and-build-docker-resource/
-cp $GOPATH/src/github.com/pivotal-cf/email-resource/Dockerfile test-and-build-docker-resource/ 
+cp -r $INPUTDIR/src/github.com/pivotal-cf/email-resource/bin test-and-build-docker-resource/
+cp $INPUTDIR/src/github.com/pivotal-cf/email-resource/Dockerfile test-and-build-docker-resource/ 
