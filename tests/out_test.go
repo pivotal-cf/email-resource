@@ -2,6 +2,7 @@ package email_resource_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -357,6 +358,19 @@ Subject: some subject line
 			output, err := RunWithStdinAllowError(inputdata, "../bin/out", "")
 			Expect(output).To(Equal("expected path to build sources as first argument"))
 			Expect(err).To(MatchError("exit status 1"))
+		})
+	})
+
+	Context("when smtp server is not available", func() {
+		It("should print an error and exit 1", func() {
+			inputs.Source.SMTP.Port = "1111"
+			inputBytes, err := json.Marshal(inputs)
+			Expect(err).NotTo(HaveOccurred())
+			inputdata = string(inputBytes)
+			output, err := RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
+			Expect(err).To(MatchError("exit status 1"))
+			Expect(output).To(Equal(fmt.Sprintf("Unable to send an email using SMTP server %s"+
+				" on port %s", inputs.Source.SMTP.Host, inputs.Source.SMTP.Port)))
 		})
 	})
 

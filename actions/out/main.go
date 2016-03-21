@@ -167,7 +167,9 @@ func main() {
 		messageData,
 	)
 	if err != nil {
-		panic(err)
+		fmt.Fprintf(os.Stderr, "Unable to send an email using SMTP server %s on port %s",
+			indata.Source.SMTP.Host, indata.Source.SMTP.Port)
+		os.Exit(1)
 	}
 
 	fmt.Printf("%s", []byte(outbytes))
