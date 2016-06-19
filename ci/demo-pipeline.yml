@@ -15,6 +15,12 @@ resources:
       from: {{email-from}}
       to: [ {{email-to}} ]
 
+resource_types:
+  - name: email
+    type: docker-image
+    source:
+      repository: pcfseceng/email-resource
+
 jobs:
   - name: demo-email-an-artifact-sha
     plan:
@@ -29,5 +35,5 @@ jobs:
             output_body_file: generated-body
       - put: send-an-email
         params:
-          subject: demo-prep-sha-email/generated-subject
-          body: demo-prep-sha-email/generated-body
+          subject: email-out/generated-subject
+          body: email-out/generated-body
