@@ -67,3 +67,5 @@ To send HTML email set the `headers` parameter to a file containing the followin
 MIME-version: 1.0
 Content-Type: text/html; charset="UTF-8"
 ```
+
+bot test
