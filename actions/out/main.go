@@ -167,8 +167,8 @@ func main() {
 		messageData,
 	)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to send an email using SMTP server %s on port %s",
-			indata.Source.SMTP.Host, indata.Source.SMTP.Port)
+		fmt.Fprintf(os.Stderr, "Unable to send an email using SMTP server %s on port %s: %v",
+			indata.Source.SMTP.Host, indata.Source.SMTP.Port, err)
 		os.Exit(1)
 	}
 
