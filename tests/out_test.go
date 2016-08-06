@@ -370,7 +370,7 @@ Subject: some subject line
 			output, err := RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
 			Expect(err).To(MatchError("exit status 1"))
 			Expect(output).To(Equal(fmt.Sprintf("Unable to send an email using SMTP server %s"+
-				" on port %s", inputs.Source.SMTP.Host, inputs.Source.SMTP.Port)))
+				" on port %s: dial tcp %s:%s: getsockopt: connection refused", inputs.Source.SMTP.Host, inputs.Source.SMTP.Port, inputs.Source.SMTP.Host, inputs.Source.SMTP.Port)))
 		})
 	})
 
