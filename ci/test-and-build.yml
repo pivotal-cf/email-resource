@@ -1,13 +1,13 @@
 ---
 platform: linux
 
-image: docker:///golang#1.5
+image: docker:///golang
 
 inputs:
   - name: email-resource-source
     path: go/src/github.com/pivotal-cf/email-resource
 outputs:
   - name: test-and-build-docker-resource
-    
+
 run:
   path: go/src/github.com/pivotal-cf/email-resource/ci/test-and-build.sh
