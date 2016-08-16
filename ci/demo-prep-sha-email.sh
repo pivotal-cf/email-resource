@@ -1,4 +1,5 @@
-#!/bin/bash -exu
+#!/bin/bash
+set -exu
 
 SHA=$(shasum $file_to_hash | cut -d ' ' -f1)
 
