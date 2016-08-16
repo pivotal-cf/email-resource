@@ -3,7 +3,7 @@ package email_resource_test
 import (
 	"net"
 
-	"github.com/pivotal-cf/email-resource/Godeps/_workspace/src/bitbucket.org/chrj/smtpd"
+	"bitbucket.org/chrj/smtpd"
 )
 
 type FakeSMTPServer struct {
