@@ -25,7 +25,8 @@ type Input struct {
 	Params struct {
 		Subject       string
 		BodyFile      string `json:"body_file"`
-		SendEmptyBody bool   `json:"send_empty_body"`
+		Body          string
+		SendEmptyBody bool `json:"send_empty_body"`
 		Headers       string
 	}
 }
@@ -100,8 +101,9 @@ func Run(sourceRoot string, inBytes []byte) {
 		headers = strings.Trim(headers, "\n")
 	}
 
-	var body string
-	if inData.Params.BodyFile != "" {
+	body := inData.Params.Body
+
+	if body == "" && inData.Params.BodyFile != "" {
 		body, err = readSource(inData.Params.BodyFile)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, err.Error())

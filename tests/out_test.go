@@ -26,6 +26,12 @@ var _ = Describe("Out", func() {
 
 	var inputs out.Input
 
+	body := `this is a body
+it has many lines
+
+even empty lines
+
+!`
 	createSource := func(relativePath, contents string) {
 		absPath := path.Join(sourceRoot, relativePath)
 		Expect(os.MkdirAll(filepath.Dir(absPath), 0700)).To(Succeed())
@@ -56,13 +62,7 @@ var _ = Describe("Out", func() {
 		inputs.Params.Subject = "some/path/to/subject.txt"
 		createSource(inputs.Params.Subject, "some subject line")
 
-		inputs.Params.BodyFile = "some/other/path/to/body"
-		createSource(inputs.Params.BodyFile, `this is a body
-it has many lines
-
-even empty lines
-
-!`)
+		inputs.Params.Body = body
 	})
 
 	JustBeforeEach(func() {
@@ -230,48 +230,71 @@ Subject: some subject line
 		})
 	})
 
-	Context("when the body is empty", func() {
+	Context("when the 'Body' parameter is empty", func() {
 		BeforeEach(func() {
-			inputs.Params.BodyFile = ""
+			inputs.Params.Body = ""
 		})
 
-		Context("when the 'SendEmptyBody' parameter is true", func() {
+		Context("but the 'BodyFile' paramter is given", func() {
 			BeforeEach(func() {
-				inputs.Params.SendEmptyBody = true
+				inputs.Params.BodyFile = "some/other/path/to/body"
+				createSource(inputs.Params.BodyFile, body)
 			})
-			It("should succeed and send a message with an empty body", func() {
+
+			It("succeeds and sends an email", func() {
 				inputBytes, err := json.Marshal(inputs)
 				Expect(err).NotTo(HaveOccurred())
 				inputdata = string(inputBytes)
 
-				RunWithStdin(inputdata, "../bin/out", sourceRoot)
-
+				_, err = RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
+				Expect(err).To(BeNil())
 				Expect(smtpServer.Deliveries).To(HaveLen(1))
-				delivery := smtpServer.Deliveries[0]
-				Expect(delivery.Data).To(HaveSuffix("Subject: some subject line\n\n"))
 			})
 		})
-		Context("when the 'SendEmptyBody' parameter is false", func() {
+
+		Context("and the 'BodyFile' paramter is empty", func() {
 			BeforeEach(func() {
-				inputs.Params.SendEmptyBody = false
-			})
-			It("should succeed and not send a message", func() {
-				inputBytes, err := json.Marshal(inputs)
-				Expect(err).NotTo(HaveOccurred())
-				inputdata = string(inputBytes)
-
-				RunWithStdin(inputdata, "../bin/out", sourceRoot)
-
-				Expect(smtpServer.Deliveries).To(HaveLen(0))
+				inputs.Params.BodyFile = ""
 			})
 
-			It("should print a message to stderr", func() {
-				inputBytes, err := json.Marshal(inputs)
-				Expect(err).NotTo(HaveOccurred())
-				inputdata = string(inputBytes)
+			Context("when the 'SendEmptyBody' parameter is true", func() {
+				BeforeEach(func() {
+					inputs.Params.SendEmptyBody = true
+				})
+				It("should succeed and send a message with an empty body", func() {
+					inputBytes, err := json.Marshal(inputs)
+					Expect(err).NotTo(HaveOccurred())
+					inputdata = string(inputBytes)
 
-				output := RunWithStdin(inputdata, "../bin/out", sourceRoot)
-				Expect(output).To(ContainSubstring("Message not sent because the message body is empty and send_empty_body parameter was set to false. Github readme: https://github.com/pivotal-cf/email-resource"))
+					RunWithStdin(inputdata, "../bin/out", sourceRoot)
+
+					Expect(smtpServer.Deliveries).To(HaveLen(1))
+					delivery := smtpServer.Deliveries[0]
+					Expect(delivery.Data).To(HaveSuffix("Subject: some subject line\n\n"))
+				})
+			})
+			Context("when the 'SendEmptyBody' parameter is false", func() {
+				BeforeEach(func() {
+					inputs.Params.SendEmptyBody = false
+				})
+				It("should succeed and not send a message", func() {
+					inputBytes, err := json.Marshal(inputs)
+					Expect(err).NotTo(HaveOccurred())
+					inputdata = string(inputBytes)
+
+					RunWithStdin(inputdata, "../bin/out", sourceRoot)
+
+					Expect(smtpServer.Deliveries).To(HaveLen(0))
+				})
+
+				It("should print a message to stderr", func() {
+					inputBytes, err := json.Marshal(inputs)
+					Expect(err).NotTo(HaveOccurred())
+					inputdata = string(inputBytes)
+
+					output := RunWithStdin(inputdata, "../bin/out", sourceRoot)
+					Expect(output).To(ContainSubstring("Message not sent because the message body is empty and send_empty_body parameter was set to false. Github readme: https://github.com/pivotal-cf/email-resource"))
+				})
 			})
 		})
 	})
@@ -303,7 +326,7 @@ Subject: some subject line
 	})
 
 	Context("when the 'source.smtp.username' is empty", func() {
-		It("does not fail and send an email", func() {
+		It("succeeds and sends an email", func() {
 			inputs.Source.SMTP.Username = ""
 			inputBytes, err := json.Marshal(inputs)
 			Expect(err).NotTo(HaveOccurred())

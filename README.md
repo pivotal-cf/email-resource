@@ -64,8 +64,11 @@ This is an output-only resource, so `check` and `in` actions are no-ops.
 
 * `headers`: *Optional.* Path to plain text file containing additional mail headers
 * `subject`: *Required.* Path to plain text file containing the subject
-* `body_file`: *Required.* Path to file containing the email body.
-* `send_empty_body`: *Optional.* If true, send the email even if the body is empty (defaults to `false`).
+
+One of the following has to be provided. If both `body` and `body_file` are provided, `body` takes precedence:
+* `body`: Body as plain text
+* `body_file`: Path to file containing the email body
+* `send_empty_body`: If true, send the email even if the body is empty (defaults to `false`).
 
 For example, a build plan might contain this:
 ```yaml
