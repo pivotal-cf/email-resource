@@ -7,7 +7,7 @@ import (
 
 var _ = Describe("In", func() {
 	BeforeEach(func() {
-		Run("go", "build", "-o", "../bin/in", "../actions/in")
+		Run("go", "build", "-o", "../bin/in", "../cmds/in")
 	})
 
 	Context("when the version is given on Standard In", func() {

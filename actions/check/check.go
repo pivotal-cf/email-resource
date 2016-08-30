@@ -1,7 +1,7 @@
-package main
+package check
 
 import "fmt"
 
-func main() {
+func Run() {
 	fmt.Println("[]")
 }
