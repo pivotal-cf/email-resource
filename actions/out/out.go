@@ -1,4 +1,4 @@
-package main
+package out
 
 import (
 	"encoding/json"
@@ -24,27 +24,21 @@ type Input struct {
 	}
 	Params struct {
 		Subject       string
-		Body          string
-		SendEmptyBody bool `json:"send_empty_body"`
+		BodyFile      string `json:"body_file"`
+		SendEmptyBody bool   `json:"send_empty_body"`
 		Headers       string
 	}
 }
 
-func main() {
-	sourceRoot := os.Args[1]
+func Run(sourceRoot string, inBytes []byte) {
 	if sourceRoot == "" {
 		fmt.Fprintf(os.Stderr, "expected path to build sources as first argument")
 		os.Exit(1)
 	}
 
-	inBytes, err := ioutil.ReadAll(os.Stdin)
-	if err != nil {
-		panic(err)
-	}
-
 	inData := Input{}
 
-	err = json.Unmarshal(inBytes, &inData)
+	err := json.Unmarshal(inBytes, &inData)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error parsing input as JSON: %s", err)
 		os.Exit(1)
@@ -107,8 +101,8 @@ func main() {
 	}
 
 	var body string
-	if inData.Params.Body != "" {
-		body, err = readSource(inData.Params.Body)
+	if inData.Params.BodyFile != "" {
+		body, err = readSource(inData.Params.BodyFile)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, err.Error())
 			os.Exit(1)

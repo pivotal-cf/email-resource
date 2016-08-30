@@ -36,4 +36,4 @@ jobs:
       - put: send-an-email
         params:
           subject: email-out/generated-subject
-          body: email-out/generated-body
+          body_file: email-out/generated-body

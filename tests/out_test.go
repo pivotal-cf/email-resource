@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pivotal-cf/email-resource/actions/out"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -23,26 +24,7 @@ var _ = Describe("Out", func() {
 		Value string
 	}
 
-	type Input struct {
-		Source struct {
-			SMTP struct {
-				Host     string `json:"host"`
-				Port     string `json:"port"`
-				Username string `json:"username"`
-				Password string `json:"password"`
-			} `json:"smtp"`
-			To   []string `json:"to"`
-			From string   `json:"from"`
-		} `json:"source"`
-		Params struct {
-			Subject       string `json:"subject"`
-			Body          string `json:"body"`
-			SendEmptyBody bool   `json:"send_empty_body"`
-			Headers       string `json:"headers"`
-		} `json:"params"`
-	}
-
-	var inputs Input
+	var inputs out.Input
 
 	createSource := func(relativePath, contents string) {
 		absPath := path.Join(sourceRoot, relativePath)
@@ -51,7 +33,7 @@ var _ = Describe("Out", func() {
 	}
 
 	BeforeSuite(func() {
-		Run("go", "build", "-o", "../bin/out", "../actions/out")
+		Run("go", "build", "-o", "../bin/out", "../cmds/out")
 	})
 
 	BeforeEach(func() {
@@ -59,7 +41,7 @@ var _ = Describe("Out", func() {
 		smtpServer.Boot()
 
 		var err error
-		inputs = Input{}
+		inputs = out.Input{}
 		inputs.Source.SMTP.Username = "some username"
 		inputs.Source.SMTP.Password = "some password"
 		inputs.Source.SMTP.Host = smtpServer.Host
@@ -72,9 +54,10 @@ var _ = Describe("Out", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		inputs.Params.Subject = "some/path/to/subject.txt"
-		inputs.Params.Body = "some/other/path/to/body"
 		createSource(inputs.Params.Subject, "some subject line")
-		createSource(inputs.Params.Body, `this is a body
+
+		inputs.Params.BodyFile = "some/other/path/to/body"
+		createSource(inputs.Params.BodyFile, `this is a body
 it has many lines
 
 even empty lines
@@ -101,9 +84,9 @@ even empty lines
 				Time time.Time
 			}
 		}
+
 		Expect(json.Unmarshal([]byte(output), &outdata)).To(Succeed())
 		Expect(outdata.Version.Time).To(BeTemporally("~", time.Now(), 5*time.Second))
-
 		var untyped map[string]interface{}
 		Expect(json.Unmarshal([]byte(output), &untyped)).To(Succeed())
 		Expect(untyped).To(HaveKey("version"))
@@ -249,7 +232,7 @@ Subject: some subject line
 
 	Context("when the body is empty", func() {
 		BeforeEach(func() {
-			inputs.Params.Body = ""
+			inputs.Params.BodyFile = ""
 		})
 
 		Context("when the 'SendEmptyBody' parameter is true", func() {

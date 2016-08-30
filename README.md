@@ -64,7 +64,7 @@ This is an output-only resource, so `check` and `in` actions are no-ops.
 
 * `headers`: *Optional.* Path to plain text file containing additional mail headers
 * `subject`: *Required.* Path to plain text file containing the subject
-* `body`: *Required.* Path to file containing the email body.
+* `body_file`: *Required.* Path to file containing the email body.
 * `send_empty_body`: *Optional.* If true, send the email even if the body is empty (defaults to `false`).
 
 For example, a build plan might contain this:
@@ -72,7 +72,7 @@ For example, a build plan might contain this:
   - put: send-an-email
     params:
       subject: demo-prep-sha-email/generated-subject
-      body: demo-prep-sha-email/generated-body
+      body_file: demo-prep-sha-email/generated-body
 ```
 
 #### HTML Email
