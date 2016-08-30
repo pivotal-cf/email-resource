@@ -77,6 +77,7 @@ func RunWithStdinAllowError(stdin string, command string, arguments ...string) (
 	cmd.Stdin = strings.NewReader(stdin)
 	cmd.Stdout = outWriter
 	cmd.Stderr = errWriter
+	cmd.Env = os.Environ()
 	err := cmd.Run()
 	return b.String(), err
 }

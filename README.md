@@ -70,12 +70,15 @@ One of the following has to be provided. If both `body` and `body_file` are prov
 * `body_file`: Path to file containing the email body
 * `send_empty_body`: If true, send the email even if the body is empty (defaults to `false`).
 
+All body parameters support the [concourse build metadata parameters](http://concourse.ci/implementing-resources.html#resource-metadata).
+*Important:* Only parameter expansion with braces is supported, e.g. `${BUILD_NAME}`. Only the parameters listed on the concourse page are supported.
+
 For example, a build plan might contain this:
 ```yaml
   - put: send-an-email
     params:
       subject: demo-prep-sha-email/generated-subject
-      body_file: demo-prep-sha-email/generated-body
+      body: "Link: ${ATC_EXTERNAL_URL}/pipelines/${BUILD_PIPELINE_NAME}/jobs/${BUILD_JOB_NAME}/builds/${BUILD_NAME}"
 ```
 
 #### HTML Email

@@ -111,6 +111,8 @@ func Run(sourceRoot string, inBytes []byte) {
 		}
 	}
 
+	renderedBody := RenderTemplate(body)
+
 	type MetadataItem struct {
 		Name  string
 		Value string
@@ -139,9 +141,9 @@ func Run(sourceRoot string, inBytes []byte) {
 	messageData = append(messageData, []byte("Subject: "+subject+"\n")...)
 
 	messageData = append(messageData, []byte("\n")...)
-	messageData = append(messageData, []byte(body)...)
+	messageData = append(messageData, []byte(renderedBody)...)
 
-	if inData.Params.SendEmptyBody == false && len(body) == 0 {
+	if inData.Params.SendEmptyBody == false && len(renderedBody) == 0 {
 		fmt.Fprintf(os.Stderr, "Message not sent because the message body is empty and send_empty_body parameter was set to false. Github readme: https://github.com/pivotal-cf/email-resource")
 		fmt.Printf("%s", []byte(outBytes))
 		return

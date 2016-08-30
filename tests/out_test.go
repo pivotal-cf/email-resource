@@ -392,4 +392,26 @@ Subject: some subject line
 			RunWithStdin(string(inputBytes), "../bin/out", sourceRoot)
 		})
 	})
+
+	Context("when body contains concourse metadata env vars", func(){
+		BeforeEach(func(){
+			inputs.Params.Body = "Body with ${BUILD_NAME}"
+		})
+
+		It("replaces them with the corresponding value from the environment", func(){
+			os.Setenv("BUILD_NAME", "name of the build")
+
+			RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
+
+			Expect(smtpServer.Deliveries).To(HaveLen(1))
+			delivery := smtpServer.Deliveries[0]
+			Expect(delivery.Sender).To(Equal("sender@example.com"))
+			Expect(delivery.Recipients).To(Equal([]string{"recipient@example.com", "recipient+2@example.com"}))
+
+			data := strings.Split(string(delivery.Data), "\n")
+			Expect(data).To(ContainElement("To: recipient@example.com, recipient+2@example.com"))
+			Expect(data).To(ContainElement("Subject: some subject line"))
+			Expect(string(delivery.Data)).To(ContainSubstring("Body with name of the build"))
+		})
+	})
 })
