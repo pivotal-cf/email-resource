@@ -14,12 +14,28 @@ resource_types:
 
 Look at the [demo pipeline](https://github.com/pivotal-cf/email-resource/blob/master/ci/demo-pipeline.yml) for a complete example.
 
-This resource acts as an SMTP client, using `PLAIN` auth over TLS.  So you need an SMTP server that supports all that.
+This resource acts as an SMTP client.
 
 For development, we've been using [Amazon SES](https://aws.amazon.com/ses/) with its [SMTP support](http://docs.aws.amazon.com/ses/latest/DeveloperGuide/smtp-credentials.html)
 
 ## Source Configuration
-An example source configuration is below.  None of the parameters are optional.
+
+The `username` and `password` are optional. If they are omitted, the email is send without AUTH and does not use TLS.
+It is using `PLAIN` auth over TLS otherwise. In that case you need an SMTP server that supports all that.
+
+#### Parameters
+
+```yaml
+   smtp:
+     host: <host>
+     port: <port> # this must be a string
+     username: <optional username>
+     password: <optional password>
+   from: <from address>
+   to: [ <recipient addresses> ]
+```
+
+An example source configuration is below.
 ```yaml
 resources:
 - name: send-an-email
@@ -28,7 +44,7 @@ resources:
     smtp:
       host: smtp.example.com
       port: "587" # this must be a string
-      username: a-user
+      username: a-user # TLS and PLAIN AUTH enabled
       password: my-password
     from: build-system@example.com
     to: [ "dev-team@example.com", "product@example.net" ]

@@ -23,7 +23,7 @@ var _ = Describe("Out", func() {
 		Value string
 	}
 
-	type inputStruct struct {
+	type Input struct {
 		Source struct {
 			SMTP struct {
 				Host     string `json:"host"`
@@ -42,7 +42,7 @@ var _ = Describe("Out", func() {
 		} `json:"params"`
 	}
 
-	var inputs inputStruct
+	var inputs Input
 
 	createSource := func(relativePath, contents string) {
 		absPath := path.Join(sourceRoot, relativePath)
@@ -59,7 +59,7 @@ var _ = Describe("Out", func() {
 		smtpServer.Boot()
 
 		var err error
-		inputs = inputStruct{}
+		inputs = Input{}
 		inputs.Source.SMTP.Username = "some username"
 		inputs.Source.SMTP.Password = "some password"
 		inputs.Source.SMTP.Host = smtpServer.Host
@@ -320,28 +320,30 @@ Subject: some subject line
 	})
 
 	Context("when the 'source.smtp.username' is empty", func() {
-		It("should print an error and exit 1", func() {
+		It("does not fail and send an email", func() {
 			inputs.Source.SMTP.Username = ""
 			inputBytes, err := json.Marshal(inputs)
 			Expect(err).NotTo(HaveOccurred())
 			inputdata = string(inputBytes)
 
-			output, err := RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
-			Expect(err).To(MatchError("exit status 1"))
-			Expect(output).To(Equal(`missing required field "source.smtp.username"`))
+			_, err = RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
+			Expect(err).To(BeNil())
+			Expect(smtpServer.Deliveries).To(HaveLen(1))
 		})
 	})
 
-	Context("when the 'source.smtp.password' is empty", func() {
-		It("should print an error and exit 1", func() {
-			inputs.Source.SMTP.Password = ""
-			inputBytes, err := json.Marshal(inputs)
-			Expect(err).NotTo(HaveOccurred())
-			inputdata = string(inputBytes)
+	Context("when the 'source.smtp.username' is NOT empty", func() {
+		Context("and the 'source.smtp.password' is empty", func() {
+			It("should print an error and exit 1", func() {
+				inputs.Source.SMTP.Password = ""
+				inputBytes, err := json.Marshal(inputs)
+				Expect(err).NotTo(HaveOccurred())
+				inputdata = string(inputBytes)
 
-			output, err := RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
-			Expect(err).To(MatchError("exit status 1"))
-			Expect(output).To(Equal(`missing required field "source.smtp.password"`))
+				output, err := RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
+				Expect(err).To(MatchError("exit status 1"))
+				Expect(output).To(Equal(`"source.smtp.password" is required, when "source.smtp.username" is given`))
+			})
 		})
 	})
 
