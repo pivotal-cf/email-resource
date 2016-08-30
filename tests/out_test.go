@@ -32,6 +32,8 @@ it has many lines
 even empty lines
 
 !`
+	subject := "some subject line"
+
 	createSource := func(relativePath, contents string) {
 		absPath := path.Join(sourceRoot, relativePath)
 		Expect(os.MkdirAll(filepath.Dir(absPath), 0700)).To(Succeed())
@@ -59,9 +61,7 @@ even empty lines
 		sourceRoot, err = ioutil.TempDir("", "sources")
 		Expect(err).NotTo(HaveOccurred())
 
-		inputs.Params.Subject = "some/path/to/subject.txt"
-		createSource(inputs.Params.Subject, "some subject line")
-
+		inputs.Params.Subject = subject
 		inputs.Params.Body = body
 	})
 
@@ -152,6 +152,45 @@ even empty lines
 
 !`))
 
+	})
+
+	Context("when the 'Subject' parameter is empty", func() {
+		BeforeEach(func() {
+			inputs.Params.Subject = ""
+		})
+
+		Context("but the 'SubjectFile' paramter is given", func() {
+			BeforeEach(func() {
+				inputs.Params.SubjectFile = "some/other/path/to/subject"
+				createSource(inputs.Params.SubjectFile, subject)
+			})
+
+			It("succeeds and sends an email", func() {
+				inputBytes, err := json.Marshal(inputs)
+				Expect(err).NotTo(HaveOccurred())
+				inputdata = string(inputBytes)
+
+				_, err = RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
+				Expect(err).To(BeNil())
+				Expect(smtpServer.Deliveries).To(HaveLen(1))
+			})
+		})
+
+		Context("and the 'SubjectFile' paramter is empty", func() {
+			BeforeEach(func() {
+				inputs.Params.SubjectFile = ""
+			})
+
+			It("returns an error", func() {
+				inputBytes, err := json.Marshal(inputs)
+				Expect(err).NotTo(HaveOccurred())
+				inputdata = string(inputBytes)
+
+				output, err := RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
+				Expect(err).To(MatchError("exit status 1"))
+				Expect(output).To(Equal(`either field "params.subject" or "params.subject_file" have to be given`))
+			})
+		})
 	})
 
 	Context("when the subject has an extra newline", func() {
@@ -405,13 +444,26 @@ Subject: some subject line
 
 			Expect(smtpServer.Deliveries).To(HaveLen(1))
 			delivery := smtpServer.Deliveries[0]
-			Expect(delivery.Sender).To(Equal("sender@example.com"))
-			Expect(delivery.Recipients).To(Equal([]string{"recipient@example.com", "recipient+2@example.com"}))
 
-			data := strings.Split(string(delivery.Data), "\n")
-			Expect(data).To(ContainElement("To: recipient@example.com, recipient+2@example.com"))
-			Expect(data).To(ContainElement("Subject: some subject line"))
 			Expect(string(delivery.Data)).To(ContainSubstring("Body with name of the build"))
+		})
+	})
+
+	Context("when subject contains concourse metadata env vars", func(){
+		BeforeEach(func(){
+			inputs.Params.Subject = "Subject with ${BUILD_NAME}"
+		})
+
+		It("replaces them with the corresponding value from the environment", func(){
+			os.Setenv("BUILD_NAME", "name of the build")
+
+			RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
+
+			Expect(smtpServer.Deliveries).To(HaveLen(1))
+			delivery := smtpServer.Deliveries[0]
+			data := strings.Split(string(delivery.Data), "\n")
+
+			Expect(data).To(ContainElement("Subject: Subject with name of the build"))
 		})
 	})
 })

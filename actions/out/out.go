@@ -23,6 +23,7 @@ type Input struct {
 		To   []string
 	}
 	Params struct {
+		SubjectFile   string `json:"subject_file"`
 		Subject       string
 		BodyFile      string `json:"body_file"`
 		Body          string
@@ -70,8 +71,8 @@ func Run(sourceRoot string, inBytes []byte) {
 		os.Exit(1)
 	}
 
-	if inData.Params.Subject == "" {
-		fmt.Fprintf(os.Stderr, `missing required field "params.subject"`)
+	if inData.Params.Subject == "" && inData.Params.SubjectFile == "" {
+		fmt.Fprintf(os.Stderr, `either field "params.subject" or "params.subject_file" have to be given`)
 		os.Exit(1)
 	}
 
@@ -84,12 +85,17 @@ func Run(sourceRoot string, inBytes []byte) {
 		return string(bytes), err
 	}
 
-	subject, err := readSource(inData.Params.Subject)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, err.Error())
-		os.Exit(1)
+	subject := inData.Params.Subject
+
+	if subject == "" && inData.Params.SubjectFile != "" {
+		subject, err = readSource(inData.Params.SubjectFile)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, err.Error())
+			os.Exit(1)
+		}
 	}
 	subject = strings.Trim(subject, "\n")
+	renderedSubject := RenderTemplate(subject)
 
 	var headers string
 	if inData.Params.Headers != "" {
@@ -126,7 +132,7 @@ func Run(sourceRoot string, inBytes []byte) {
 	outData.Version.Time = time.Now().UTC()
 	outData.Metadata = []MetadataItem{
 		{Name: "smtp_host", Value: inData.Source.SMTP.Host},
-		{Name: "subject", Value: subject},
+		{Name: "subject", Value: renderedSubject},
 	}
 	outBytes, err := json.Marshal(outData)
 	if err != nil {
@@ -138,7 +144,7 @@ func Run(sourceRoot string, inBytes []byte) {
 	if headers != "" {
 		messageData = append(messageData, []byte(headers+"\n")...)
 	}
-	messageData = append(messageData, []byte("Subject: "+subject+"\n")...)
+	messageData = append(messageData, []byte("Subject: "+renderedSubject+"\n")...)
 
 	messageData = append(messageData, []byte("\n")...)
 	messageData = append(messageData, []byte(renderedBody)...)

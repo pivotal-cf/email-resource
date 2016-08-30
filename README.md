@@ -63,21 +63,24 @@ This is an output-only resource, so `check` and `in` actions are no-ops.
 #### Parameters
 
 * `headers`: *Optional.* Path to plain text file containing additional mail headers
-* `subject`: *Required.* Path to plain text file containing the subject
+
+One of the following has to be provided. If both are provided, `subject` takes precedence:
+* `subject`: Subject as plain text
+* `subject_file`: Path to plain text file containing the subject
 
 One of the following has to be provided. If both `body` and `body_file` are provided, `body` takes precedence:
 * `body`: Body as plain text
 * `body_file`: Path to file containing the email body
 * `send_empty_body`: If true, send the email even if the body is empty (defaults to `false`).
 
-All body parameters support the [concourse build metadata parameters](http://concourse.ci/implementing-resources.html#resource-metadata).
+All subject and body parameters support the [concourse build metadata parameters](http://concourse.ci/implementing-resources.html#resource-metadata).
 *Important:* Only parameter expansion with braces is supported, e.g. `${BUILD_NAME}`. Only the parameters listed on the concourse page are supported.
 
 For example, a build plan might contain this:
 ```yaml
   - put: send-an-email
     params:
-      subject: demo-prep-sha-email/generated-subject
+      subject: "Build Job Failed: ${BUILD_PIPELINE_NAME}/${BUILD_JOB_NAME}"
       body: "Link: ${ATC_EXTERNAL_URL}/pipelines/${BUILD_PIPELINE_NAME}/jobs/${BUILD_JOB_NAME}/builds/${BUILD_NAME}"
 ```
 
