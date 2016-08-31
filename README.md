@@ -14,12 +14,28 @@ resource_types:
 
 Look at the [demo pipeline](https://github.com/pivotal-cf/email-resource/blob/master/ci/demo-pipeline.yml) for a complete example.
 
-This resource acts as an SMTP client, using `PLAIN` auth over TLS.  So you need an SMTP server that supports all that.
+This resource acts as an SMTP client.
 
 For development, we've been using [Amazon SES](https://aws.amazon.com/ses/) with its [SMTP support](http://docs.aws.amazon.com/ses/latest/DeveloperGuide/smtp-credentials.html)
 
 ## Source Configuration
-An example source configuration is below.  None of the parameters are optional.
+
+The `username` and `password` are optional. If they are omitted, the email is send without AUTH and does not use TLS.
+It is using `PLAIN` auth over TLS otherwise. In that case you need an SMTP server that supports all that.
+
+#### Parameters
+
+```yaml
+   smtp:
+     host: <host>
+     port: <port> # this must be a string
+     username: <optional username>
+     password: <optional password>
+   from: <from address>
+   to: [ <recipient addresses> ]
+```
+
+An example source configuration is below.
 ```yaml
 resources:
 - name: send-an-email
@@ -28,7 +44,7 @@ resources:
     smtp:
       host: smtp.example.com
       port: "587" # this must be a string
-      username: a-user
+      username: a-user # TLS and PLAIN AUTH enabled
       password: my-password
     from: build-system@example.com
     to: [ "dev-team@example.com", "product@example.net" ]
@@ -47,16 +63,25 @@ This is an output-only resource, so `check` and `in` actions are no-ops.
 #### Parameters
 
 * `headers`: *Optional.* Path to plain text file containing additional mail headers
-* `subject`: *Required.* Path to plain text file containing the subject
-* `body`: *Required.* Path to file containing the email body.
-* `send_empty_body`: *Optional.* If true, send the email even if the body is empty (defaults to `false`).
+
+One of the following has to be provided. If both are provided, `subject` takes precedence:
+* `subject`: Subject as plain text
+* `subject_file`: Path to plain text file containing the subject
+
+One of the following has to be provided. If both `body` and `body_file` are provided, `body` takes precedence:
+* `body`: Body as plain text
+* `body_file`: Path to file containing the email body
+* `send_empty_body`: If true, send the email even if the body is empty (defaults to `false`).
+
+All subject and body parameters support the [concourse build metadata parameters](http://concourse.ci/implementing-resources.html#resource-metadata).
+*Important:* Only parameter expansion with braces is supported, e.g. `${BUILD_NAME}`. Only the parameters listed on the concourse page are supported.
 
 For example, a build plan might contain this:
 ```yaml
   - put: send-an-email
     params:
-      subject: demo-prep-sha-email/generated-subject
-      body: demo-prep-sha-email/generated-body
+      subject: "Build Job Failed: ${BUILD_PIPELINE_NAME}/${BUILD_JOB_NAME}"
+      body: "Link: ${ATC_EXTERNAL_URL}/pipelines/${BUILD_PIPELINE_NAME}/jobs/${BUILD_JOB_NAME}/builds/${BUILD_NAME}"
 ```
 
 #### HTML Email

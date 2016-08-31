@@ -11,9 +11,9 @@ export INPUTDIR=$PWD/go
 pushd go/src/github.com/pivotal-cf/email-resource
   ginkgo -r -p -race "$@"
 
-  go build -tags netgo -a -o bin/check ./actions/check
-  go build -tags netgo -a -o bin/in ./actions/in
-  go build -tags netgo -a -o bin/out ./actions/out
+  go build -tags netgo -a -o bin/check ./cmds/check
+  go build -tags netgo -a -o bin/in ./cmds/in
+  go build -tags netgo -a -o bin/out ./cmds/out
 popd
 
 cp /etc/ssl/certs/ca-certificates.crt test-and-build-docker-resource/ca-certificates.crt

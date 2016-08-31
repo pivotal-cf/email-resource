@@ -7,7 +7,7 @@ import (
 
 var _ = Describe("Check", func() {
 	BeforeEach(func() {
-		Run("go", "build", "-o", "../bin/check", "../actions/check")
+		Run("go", "build", "-o", "../bin/check", "../cmds/check")
 	})
 
 	It("should output an empty JSON list", func() {
