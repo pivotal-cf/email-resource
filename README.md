@@ -33,8 +33,22 @@ resources:
     from: build-system@example.com
     to: [ "dev-team@example.com", "product@example.net" ]
 ```
+
+An example source configuration is below supporting sending email when anonymous is permitted.
+```yaml
+resources:
+- name: send-an-email
+  type: email
+  source:
+    smtp:
+      host: smtp.example.com
+      port: "587" # this must be a string
+      anonymous: true
+    from: build-system@example.com
+    to: [ "dev-team@example.com", "product@example.net" ]
+```
 Note that `to` is an array, and that `port` is a string.
-If you're using `fly configure` with the `--load-vars-from` (`-l`) substitutions, every `{{ variable }}` 
+If you're using `fly configure` with the `--load-vars-from` (`-l`) substitutions, every `{{ variable }}`
 [automatically gets converted to a string](http://concourse.ci/fly-cli.html).
 But for literals you need to surround it with quotes.
 
