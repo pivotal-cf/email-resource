@@ -18,6 +18,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	const literalStringPrefix = "##"
+
 	var indata struct {
 		Source struct {
 			SMTP struct {
@@ -30,10 +32,11 @@ func main() {
 			To   []string
 		}
 		Params struct {
-			Subject       string
-			Body          string
-			SendEmptyBody bool `json:"send_empty_body"`
-			Headers       string
+			Subject             string
+			AdditionalRecipient string `json:"additional_recipient"`
+			Body                string
+			SendEmptyBody       bool `json:"send_empty_body"`
+			Headers             string
 		}
 	}
 
@@ -83,12 +86,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	readSource := func(sourcePath string) (string, error) {
-		if !filepath.IsAbs(sourcePath) {
-			sourcePath = filepath.Join(sourceRoot, sourcePath)
+	readSource := func(sourceString string) (string, error) {
+
+		if strings.HasPrefix(sourceString, literalStringPrefix) {
+			return string(strings.TrimPrefix(sourceString, literalStringPrefix)), nil
 		}
 
-		bytes, err := ioutil.ReadFile(sourcePath)
+		if !filepath.IsAbs(sourceString) {
+			sourceString = filepath.Join(sourceRoot, sourceString)
+		}
+
+		bytes, err := ioutil.ReadFile(sourceString)
+
 		return string(bytes), err
 	}
 
@@ -116,6 +125,20 @@ func main() {
 			fmt.Fprintf(os.Stderr, err.Error())
 			os.Exit(1)
 		}
+	}
+
+	var additionalRecipient string
+
+	if indata.Params.AdditionalRecipient != "" {
+		additionalRecipient, err = readSource(indata.Params.AdditionalRecipient)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, err.Error())
+			os.Exit(1)
+		}
+	}
+
+	if len(additionalRecipient) > 0 {
+		indata.Source.To = append(indata.Source.To, additionalRecipient)
 	}
 
 	type MetadataItem struct {

@@ -35,10 +35,11 @@ var _ = Describe("Out", func() {
 			From string   `json:"from"`
 		} `json:"source"`
 		Params struct {
-			Subject       string `json:"subject"`
-			Body          string `json:"body"`
-			SendEmptyBody bool   `json:"send_empty_body"`
-			Headers       string `json:"headers"`
+			Subject             string `json:"subject"`
+			AdditionalRecipient string `json:"additional_recipient"`
+			Body                string `json:"body"`
+			SendEmptyBody       bool   `json:"send_empty_body"`
+			Headers             string `json:"headers"`
 		} `json:"params"`
 	}
 
@@ -73,6 +74,7 @@ var _ = Describe("Out", func() {
 
 		inputs.Params.Subject = "some/path/to/subject.txt"
 		inputs.Params.Body = "some/other/path/to/body"
+		inputs.Params.AdditionalRecipient = "some/other/path/to/additionalRecipient"
 		createSource(inputs.Params.Subject, "some subject line")
 		createSource(inputs.Params.Body, `this is a body
 it has many lines
@@ -80,6 +82,7 @@ it has many lines
 even empty lines
 
 !`)
+		createSource(inputs.Params.AdditionalRecipient, "recipient+3@example.com")
 	})
 
 	JustBeforeEach(func() {
@@ -126,10 +129,10 @@ even empty lines
 		Expect(smtpServer.Deliveries).To(HaveLen(1))
 		delivery := smtpServer.Deliveries[0]
 		Expect(delivery.Sender).To(Equal("sender@example.com"))
-		Expect(delivery.Recipients).To(Equal([]string{"recipient@example.com", "recipient+2@example.com"}))
+		Expect(delivery.Recipients).To(Equal([]string{"recipient@example.com", "recipient+2@example.com", "recipient+3@example.com"}))
 
 		data := strings.Split(string(delivery.Data), "\n")
-		Expect(data).To(ContainElement("To: recipient@example.com, recipient+2@example.com"))
+		Expect(data).To(ContainElement("To: recipient@example.com, recipient+2@example.com, recipient+3@example.com"))
 		Expect(data).To(ContainElement("Subject: some subject line"))
 		Expect(string(delivery.Data)).To(ContainSubstring(`this is a body
 it has many lines
@@ -143,7 +146,7 @@ even empty lines
 		RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
 		Expect(smtpServer.Deliveries).To(HaveLen(1))
 		delivery := smtpServer.Deliveries[0]
-		Expect(delivery.Data).To(BeEquivalentTo(`To: recipient@example.com, recipient+2@example.com
+		Expect(delivery.Data).To(BeEquivalentTo(`To: recipient@example.com, recipient+2@example.com, recipient+3@example.com
 Subject: some subject line
 
 this is a body
@@ -181,6 +184,27 @@ even empty lines
 			Expect(smtpServer.Deliveries).To(HaveLen(1))
 			delivery := smtpServer.Deliveries[0]
 			Expect(delivery.Data).To(ContainSubstring(`Subject: some subject line
+
+this is a body
+it has many lines
+
+even empty lines
+
+!`))
+
+		})
+	})
+
+	Context("when the subject is a text string", func() {
+		BeforeEach(func() {
+			inputs.Params.Subject = "####some subject line\n\n"
+		})
+
+		It("strips the extra newline", func() {
+			RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
+			Expect(smtpServer.Deliveries).To(HaveLen(1))
+			delivery := smtpServer.Deliveries[0]
+			Expect(delivery.Data).To(ContainSubstring(`Subject: ##some subject line
 
 this is a body
 it has many lines

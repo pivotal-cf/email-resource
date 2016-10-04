@@ -46,9 +46,12 @@ This is an output-only resource, so `check` and `in` actions are no-ops.
 
 #### Parameters
 
-* `headers`: *Optional.* Path to plain text file containing additional mail headers
-* `subject`: *Required.* Path to plain text file containing the subject
-* `body`: *Required.* Path to file containing the email body.
+**NB: All parameters which are to be read from a file but begin with the literal `##` would be interpreted as a string and not a filepath**
+
+* `headers`: *Optional.* Path to plain text file containing additional mail headers or literal string if the value begins with `##`
+* `additional_recipient`: *Optional.* Path to plain text file containing additional recipient which could be determined at build time or literal string if the value begins with `##`. You can run a task before, which figures out the email of the person who committed last to a git repository (`git -C $source_path --no-pager show $(git -C $source_path rev-parse HEAD) -s --format='%ae' > output/email.txt`)
+* `subject`: *Required.* Path to plain text file containing the subject or literal string if the value begins with `##`
+* `body`: *Required.* Path to file containing the email body or literal string if the value begins with `##`
 * `send_empty_body`: *Optional.* If true, send the email even if the body is empty (defaults to `false`).
 
 For example, a build plan might contain this:
@@ -57,6 +60,15 @@ For example, a build plan might contain this:
     params:
       subject: demo-prep-sha-email/generated-subject
       body: demo-prep-sha-email/generated-body
+```
+
+Example build plan with string literals:
+```yaml
+  - put: send-an-email
+    params:
+      subject: ##Build failed in Concourse: $BUILD_PIPELINE_NAME #${BUILD_ID}
+      body: ##See ${ATC_EXTERNAL_URL}/builds/${BUILD_ID}
+      additional_recipient: demo-prep-sha-email/generated-email
 ```
 
 #### HTML Email
