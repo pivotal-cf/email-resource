@@ -50,9 +50,8 @@ This is an output-only resource, so `check` and `in` actions are no-ops.
 * `headers`: *Optional.* Path to plain text file containing additional mail headers
 * `additional_recipient`: *Optional.* Path to plain text file containing additional recipient which could be determined at build time. You can run a task before, which figures out the email of the person who committed last to a git repository (`git -C $source_path --no-pager show $(git -C $source_path rev-parse HEAD) -s --format='%ae' > output/email.txt`)
 * `subject`: *Required.* Path to plain text file containing the subject
-* `body`: *Required.* Path to file containing the email body
+* `body`: *Required.* Path to file containing the email body.
 * `send_empty_body`: *Optional.* If true, send the email even if the body is empty (defaults to `false`).
-
 
 For example, a build plan might contain this:
 ```yaml

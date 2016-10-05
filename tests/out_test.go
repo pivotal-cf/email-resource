@@ -36,10 +36,10 @@ var _ = Describe("Out", func() {
 		} `json:"source"`
 		Params struct {
 			Subject             string `json:"subject"`
-			AdditionalRecipient string `json:"additional_recipient"`
 			Body                string `json:"body"`
 			SendEmptyBody       bool   `json:"send_empty_body"`
 			Headers             string `json:"headers"`
+			AdditionalRecipient string `json:"additional_recipient"`
 		} `json:"params"`
 	}
 
@@ -349,7 +349,6 @@ Subject: some subject line
 		Context("When the additional_recipient field is not empty", func() {
 			It("should succed", func() {
 				inputs.Source.To = nil
-				//inputs.Params.AdditionalRecipient = "recipient+3@example.com"
 				inputBytes, err := json.Marshal(inputs)
 				Expect(err).NotTo(HaveOccurred())
 				inputdata = string(inputBytes)

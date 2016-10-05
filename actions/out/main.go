@@ -39,10 +39,10 @@ func main() {
 		}
 		Params struct {
 			Subject             string
-			AdditionalRecipient string `json:"additional_recipient"`
 			Body                string
 			SendEmptyBody       bool `json:"send_empty_body"`
 			Headers             string
+			AdditionalRecipient string `json:"additional_recipient"`
 		}
 	}
 
@@ -83,7 +83,7 @@ func main() {
 	}
 
 	if len(indata.Source.To) == 0 && len(indata.Params.AdditionalRecipient) == 0 {
-		fmt.Fprintf(os.Stderr, `missing required field "source.to" and "params.additional_recipient". Must specify at least one`)
+		fmt.Fprintf(os.Stderr, `missing required field "source.to" or "params.additional_recipient". Must specify at least one`)
 		os.Exit(1)
 	}
 
@@ -105,7 +105,6 @@ func main() {
 		}
 
 		bytes, err := ioutil.ReadFile(sourcePath)
-
 		return replaceTokens(string(bytes)), err
 	}
 
