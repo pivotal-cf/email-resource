@@ -195,16 +195,17 @@ even empty lines
 		})
 	})
 
-	Context("when the subject is a text string", func() {
+	Context("when the subject has template syntax", func() {
 		BeforeEach(func() {
-			inputs.Params.Subject = "####some subject line\n\n"
+			os.Setenv("BUILD_ID", "5")
+			createSource(inputs.Params.Subject, "some subject line for #${BUILD_ID}")
 		})
 
 		It("strips the extra newline", func() {
 			RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
 			Expect(smtpServer.Deliveries).To(HaveLen(1))
 			delivery := smtpServer.Deliveries[0]
-			Expect(delivery.Data).To(ContainSubstring(`Subject: ##some subject line
+			Expect(delivery.Data).To(ContainSubstring(`Subject: some subject line for #5
 
 this is a body
 it has many lines
@@ -331,16 +332,33 @@ Subject: some subject line
 	})
 
 	Context("when the 'To' is empty", func() {
-		It("should print an error and exit 1", func() {
-			inputs.Source.To = nil
-			inputBytes, err := json.Marshal(inputs)
-			Expect(err).NotTo(HaveOccurred())
-			inputdata = string(inputBytes)
+		Context("When the additional_recipient field is empty", func() {
+			It("should print an error and exit 1", func() {
+				inputs.Source.To = nil
+				inputs.Params.AdditionalRecipient = ""
+				inputBytes, err := json.Marshal(inputs)
+				Expect(err).NotTo(HaveOccurred())
+				inputdata = string(inputBytes)
 
-			output, err := RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
-			Expect(err).To(MatchError("exit status 1"))
-			Expect(output).To(Equal(`missing required field "source.to"`))
+				output, err := RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
+				Expect(err).To(MatchError("exit status 1"))
+				Expect(output).To(Equal(`missing required field "source.to" and "params.additional_recipient". Must specify at least one`))
+			})
 		})
+
+		Context("When the additional_recipient field is not empty", func() {
+			It("should succed", func() {
+				inputs.Source.To = nil
+				//inputs.Params.AdditionalRecipient = "recipient+3@example.com"
+				inputBytes, err := json.Marshal(inputs)
+				Expect(err).NotTo(HaveOccurred())
+				inputdata = string(inputBytes)
+
+				RunWithStdin(inputdata, "../bin/out", sourceRoot)
+
+			})
+		})
+
 	})
 
 	Context("when the 'source.smtp.username' is empty", func() {

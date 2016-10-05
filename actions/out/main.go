@@ -18,7 +18,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	const literalStringPrefix = "##"
+	var buildTokens = map[string]string{
+		"${BUILD_ID}":            os.Getenv("BUILD_ID"),
+		"${BUILD_NAME}":          os.Getenv("BUILD_NAME"),
+		"${BUILD_JOB_NAME}":      os.Getenv("BUILD_JOB_NAME"),
+		"${BUILD_PIPELINE_NAME}": os.Getenv("BUILD_PIPELINE_NAME"),
+		"${ATC_EXTERNAL_URL}":    os.Getenv("ATC_EXTERNAL_URL"),
+	}
 
 	var indata struct {
 		Source struct {
@@ -76,8 +82,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	if len(indata.Source.To) == 0 {
-		fmt.Fprintf(os.Stderr, `missing required field "source.to"`)
+	if len(indata.Source.To) == 0 && len(indata.Params.AdditionalRecipient) == 0 {
+		fmt.Fprintf(os.Stderr, `missing required field "source.to" and "params.additional_recipient". Must specify at least one`)
 		os.Exit(1)
 	}
 
@@ -86,19 +92,21 @@ func main() {
 		os.Exit(1)
 	}
 
-	readSource := func(sourceString string) (string, error) {
+	replaceTokens := func(sourceString string) string {
+		for k, v := range buildTokens {
+			sourceString = strings.Replace(sourceString, k, v, -1)
+		}
+		return sourceString
+	}
 
-		if strings.HasPrefix(sourceString, literalStringPrefix) {
-			return string(strings.TrimPrefix(sourceString, literalStringPrefix)), nil
+	readSource := func(sourcePath string) (string, error) {
+		if !filepath.IsAbs(sourcePath) {
+			sourcePath = filepath.Join(sourceRoot, sourcePath)
 		}
 
-		if !filepath.IsAbs(sourceString) {
-			sourceString = filepath.Join(sourceRoot, sourceString)
-		}
+		bytes, err := ioutil.ReadFile(sourcePath)
 
-		bytes, err := ioutil.ReadFile(sourceString)
-
-		return string(bytes), err
+		return replaceTokens(string(bytes)), err
 	}
 
 	subject, err := readSource(indata.Params.Subject)
