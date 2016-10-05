@@ -82,7 +82,7 @@ it has many lines
 even empty lines
 
 !`)
-		createSource(inputs.Params.AdditionalRecipient, "recipient+3@example.com")
+		createSource(inputs.Params.AdditionalRecipient, "recipient+3@example.com \n")
 	})
 
 	JustBeforeEach(func() {

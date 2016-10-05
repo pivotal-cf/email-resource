@@ -145,6 +145,8 @@ func main() {
 	}
 
 	if len(additionalRecipient) > 0 {
+		additionalRecipient = strings.Trim(additionalRecipient, "\n")
+		additionalRecipient = strings.TrimSpace(additionalRecipient)
 		indata.Source.To = append(indata.Source.To, additionalRecipient)
 	}
 
