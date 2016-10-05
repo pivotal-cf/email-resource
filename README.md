@@ -1,5 +1,7 @@
 # Email Resource
 
+[![Build Status](https://travis-ci.org/pivotal-cf/email-resource.svg?branch=master)](https://travis-ci.org/pivotal-cf/email-resource)
+
 A [Concourse](http://concourse.ci) resource that sends emails.
 
 ## Getting started
