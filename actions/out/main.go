@@ -140,6 +140,7 @@ func main() {
 
 	var messageData []byte
 	messageData = append(messageData, []byte("To: "+strings.Join(indata.Source.To, ", ")+"\n")...)
+	messageData = append(messageData, []byte("From: "+indata.Source.From+"\n")...)
 	if headers != "" {
 		messageData = append(messageData, []byte(headers+"\n")...)
 	}

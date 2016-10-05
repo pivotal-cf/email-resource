@@ -144,6 +144,7 @@ even empty lines
 		Expect(smtpServer.Deliveries).To(HaveLen(1))
 		delivery := smtpServer.Deliveries[0]
 		Expect(delivery.Data).To(BeEquivalentTo(`To: recipient@example.com, recipient+2@example.com
+From: sender@example.com
 Subject: some subject line
 
 this is a body
