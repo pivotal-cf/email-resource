@@ -342,7 +342,7 @@ Subject: some subject line
 
 				output, err := RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
 				Expect(err).To(MatchError("exit status 1"))
-				Expect(output).To(Equal(`missing required field "source.to" and "params.additional_recipient". Must specify at least one`))
+				Expect(output).To(Equal(`missing required field "source.to" or "params.additional_recipient". Must specify at least one`))
 			})
 		})
 
