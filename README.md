@@ -9,7 +9,7 @@ resource_types:
   - name: email
     type: docker-image
     source:
-      repository: pcfseceng/email-resource
+      repository: pivotalservices/concourse-email-resource
 ```
 
 Look at the [demo pipeline](https://github.com/pivotal-cf/email-resource/blob/master/ci/demo-pipeline.yml) for a complete example.
