@@ -24,7 +24,7 @@ For development, we've been using [Amazon SES](https://aws.amazon.com/ses/) with
 
 #### Parameters
 
-Within SMTP:
+Within smtp:
 
 * `host`: *Required.* SMTP Host name
 * `port`: *Required.* SMTP Port, must be entered as a string
@@ -32,6 +32,7 @@ Within SMTP:
 * `username`: *Required, Conditionally.* Username to authenticate with.  Ignored if `anonymous: true`
 * `password`: *Required, Conditionally.* Password to authenticate with.  Ignored if `anonymous: true`
 
+Within source:
 * `from`: *Required.* Email Address to be sent from.
 * `to`: *Required.* Array of email addresses to send email to.
 
