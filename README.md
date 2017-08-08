@@ -1,7 +1,5 @@
 # Email Resource
 
-[![Build Status](https://travis-ci.org/pivotal-cf/email-resource.svg?branch=master)](https://travis-ci.org/pivotal-cf/email-resource)
-
 A [Concourse](http://concourse.ci) resource that sends emails.
 
 ## Getting started
@@ -11,7 +9,7 @@ resource_types:
   - name: email
     type: docker-image
     source:
-      repository: pivotalservices/concourse-email-resource
+      repository: pcfseceng/email-resource
 ```
 
 Look at the [demo pipeline](https://github.com/pivotal-cf/email-resource/blob/master/ci/demo-pipeline.yml) for a complete example.
