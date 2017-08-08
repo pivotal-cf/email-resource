@@ -1,0 +1,66 @@
+resources:
+- name: source
+  type: git
+  source:
+    uri: git@github.com:pivotal-cf/email-resource.git
+    branch: master
+    private_key: {{git-ssh-key}}
+
+- name: version
+  type: semver
+  source:
+    driver: git
+    uri: git@github.com:pivotal-cf/email-resource.git
+    branch: version
+    file: version
+    private_key: {{git-ssh-key}}
+
+- name: draft-email-resource
+  type: github-release
+  source:
+    owner: pivotal-cf
+    repository: email-resource
+    access_token: {{github-token}}
+    drafts: true
+
+jobs:
+- name: test-and-build-publish
+  plan:
+    - aggregate:
+      - get: source
+        trigger: true
+      - get: version
+    - task: test
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            repository: golang
+        run:
+          path: source/ci/tasks/runTests.sh
+        inputs:
+        - name: source
+    - task: build
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            repository: golang
+        run:
+          path: source/ci/tasks/build.sh
+        inputs:
+        - name: source
+        - name: email-resource
+        outputs:
+        - name: compiled-output
+    - put: draft-email-resource
+      params:
+        name: compiled-output/name
+        tag: compiled-output/tag
+
+        globs:
+        - compiled-output/bin/in
+        - compiled-output/bin/out
+        - compiled-output/bin/check
