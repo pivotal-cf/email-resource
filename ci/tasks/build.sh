@@ -15,3 +15,6 @@ cd ${WORKING_DIR}
 godep go build -o ${OUTPUT_DIR}/bin/check ./actions/check
 godep go build -o ${OUTPUT_DIR}/bin/in ./actions/in
 godep go build -o ${OUTPUT_DIR}/bin/out ./actions/out
+
+echo "test release name" > ${OUTPUT_DIR}/name
+echo "test release tag" > ${OUTPUT_DIR}/tag
