@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/smtp"
 	"os"
@@ -21,10 +22,11 @@ func main() {
 	var indata struct {
 		Source struct {
 			SMTP struct {
-				Host     string
-				Port     string
-				Username string
-				Password string
+				Host      string
+				Port      string
+				Username  string
+				Password  string
+				Anonymous bool `json:"anonymous"`
 			}
 			From string
 			To   []string
@@ -58,16 +60,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	if indata.Source.SMTP.Username == "" {
-		fmt.Fprintf(os.Stderr, `missing required field "source.smtp.username"`)
-		os.Exit(1)
-	}
-
-	if indata.Source.SMTP.Password == "" {
-		fmt.Fprintf(os.Stderr, `missing required field "source.smtp.password"`)
-		os.Exit(1)
-	}
-
 	if indata.Source.From == "" {
 		fmt.Fprintf(os.Stderr, `missing required field "source.from"`)
 		os.Exit(1)
@@ -81,6 +73,18 @@ func main() {
 	if indata.Params.Subject == "" {
 		fmt.Fprintf(os.Stderr, `missing required field "params.subject"`)
 		os.Exit(1)
+	}
+
+	if indata.Source.SMTP.Anonymous == false {
+		if indata.Source.SMTP.Username == "" {
+			fmt.Fprintf(os.Stderr, `missing required field "source.smtp.username" if anonymous specify anonymous: true`)
+			os.Exit(1)
+		}
+
+		if indata.Source.SMTP.Password == "" {
+			fmt.Fprintf(os.Stderr, `missing required field "source.smtp.password" if anonymous specify anonymous: true`)
+			os.Exit(1)
+		}
 	}
 
 	readSource := func(sourcePath string) (string, error) {
@@ -155,18 +159,47 @@ func main() {
 		return
 	}
 
-	err = smtp.SendMail(
-		fmt.Sprintf("%s:%s", indata.Source.SMTP.Host, indata.Source.SMTP.Port),
-		smtp.PlainAuth(
-			"",
-			indata.Source.SMTP.Username,
-			indata.Source.SMTP.Password,
-			indata.Source.SMTP.Host,
-		),
-		indata.Source.From,
-		indata.Source.To,
-		messageData,
-	)
+	if indata.Source.SMTP.Anonymous {
+		var c *smtp.Client
+		var wc io.WriteCloser
+		c, err = smtp.Dial(fmt.Sprintf("%s:%s", indata.Source.SMTP.Host, indata.Source.SMTP.Port))
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error Dialing: "+err.Error())
+			os.Exit(1)
+		}
+		defer c.Close()
+		c.Mail(indata.Source.From)
+
+		for _, toAddress := range indata.Source.To {
+			c.Rcpt(toAddress)
+		}
+		// Send the email body.
+		wc, err = c.Data()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error Getting writer context: "+err.Error())
+			os.Exit(1)
+		}
+		defer wc.Close()
+		_, err = wc.Write(messageData)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error Writing bytes: "+err.Error())
+			os.Exit(1)
+		}
+
+	} else {
+		err = smtp.SendMail(
+			fmt.Sprintf("%s:%s", indata.Source.SMTP.Host, indata.Source.SMTP.Port),
+			smtp.PlainAuth(
+				"",
+				indata.Source.SMTP.Username,
+				indata.Source.SMTP.Password,
+				indata.Source.SMTP.Host,
+			),
+			indata.Source.From,
+			indata.Source.To,
+			messageData,
+		)
+	}
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to send an email using SMTP server %s on port %s: %v",
 			indata.Source.SMTP.Host, indata.Source.SMTP.Port, err)
