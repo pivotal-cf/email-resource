@@ -1,5 +1,7 @@
 #!/bin/bash -e
 
+
+ssh-keyscan github.com >>~/.ssh/known_hosts
 export GOPATH=$PWD/go
 export PATH=$GOPATH/bin:$PATH
 OUTPUT_DIR=$PWD/compiled-output
