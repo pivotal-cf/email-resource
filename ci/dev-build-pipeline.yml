@@ -1,0 +1,69 @@
+resources:
+- name: source
+  type: git
+  source:
+    uri: git@github.com:pivotal-cf/email-resource.git
+    branch: {{dev-build-branch}}
+    private_key: {{git-ssh-key}}
+
+- name: docker-registry
+  type: docker-image
+  source:
+    repository: {{docker-repository}}
+    username: {{docker-registry-username}}
+    password: {{docker-registry-password}}
+    tag: {{docker-dev-build-tag}}
+
+jobs:
+- name: test-and-build
+  plan:
+    - aggregate:
+      - get: source
+        trigger: true
+    - task: test
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            repository: golang
+        run:
+          path: source/ci/tasks/runTests.sh
+        inputs:
+        - name: source
+    - task: build
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            repository: golang
+        run:
+          path: sh
+          args:
+          - -exc
+          - |
+            export GOPATH=$PWD/go
+            export PATH=$GOPATH/bin:$PATH
+            OUTPUT_DIR=$PWD/compiled-output
+            SOURCE_DIR=$PWD/source
+            WORKING_DIR=$GOPATH/src/github.com/pivotal-cf/email-resource
+
+            cp source/Dockerfile ${OUTPUT_DIR}/.
+            cp /etc/ssl/certs/ca-certificates.crt ${OUTPUT_DIR}/ca-certificates.crt
+
+            go get github.com/tools/godep
+            mkdir -p ${WORKING_DIR}
+            cp -R source/* ${WORKING_DIR}/.
+            cd ${WORKING_DIR}
+            godep go build -o ${OUTPUT_DIR}/bin/check ./actions/check
+            godep go build -o ${OUTPUT_DIR}/bin/in ./actions/in
+            godep go build -o ${OUTPUT_DIR}/bin/out ./actions/out
+
+        inputs:
+        - name: source
+        outputs:
+        - name: compiled-output
+    - put: docker-registry
+      params:
+        build: compiled-output
