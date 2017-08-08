@@ -19,7 +19,23 @@ This resource acts as an SMTP client, using `PLAIN` auth over TLS.  So you need 
 For development, we've been using [Amazon SES](https://aws.amazon.com/ses/) with its [SMTP support](http://docs.aws.amazon.com/ses/latest/DeveloperGuide/smtp-credentials.html)
 
 ## Source Configuration
-An example source configuration is below.  None of the parameters are optional.
+
+### `source`:
+
+#### Parameters
+
+Within SMTP:
+
+* `host`: *Required.* SMTP Host name
+* `port`: *Required.* SMTP Port, must be entered as a string
+* `anonymous`: *Optional.* Whether or not to require credential.  true/false are valid options.  If omitted default is false
+* `username`: *Required, Conditionally.* Username to authenticate with.  Ignored if `anonymous: true`
+* `password`: *Required, Conditionally.* Password to authenticate with.  Ignored if `anonymous: true`
+
+* `from`: *Required.* Email Address to be sent from.
+* `to`: *Required.* Array of email addresses to send email to.
+
+An example source configuration is below.
 ```yaml
 resources:
 - name: send-an-email
