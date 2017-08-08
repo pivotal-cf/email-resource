@@ -3,6 +3,7 @@
 export GOPATH=$PWD/go
 export PATH=$GOPATH/bin:$PATH
 OUTPUT_DIR=$PWD/compiled-output
+SOURCE_DIR=$PWD/source
 
 cp source/Dockerfile ${OUTPUT_DIR}/.
 cp /etc/ssl/certs/ca-certificates.crt ${OUTPUT_DIR}/ca-certificates.crt
@@ -18,6 +19,7 @@ godep go build -o ${OUTPUT_DIR}/bin/out ./actions/out
 
 go get github.com/xchapter7x/versioning
 
+cd ${SOURCE_DIR}
 STAMP=$(date +"%Y%m%d%H%M")
 DRAFT_VERSION=`versioning bump_patch`-${STAMP}
 echo ${DRAFT_VERSION} > ${OUTPUT_DIR}/name
