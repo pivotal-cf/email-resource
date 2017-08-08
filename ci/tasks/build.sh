@@ -16,5 +16,9 @@ godep go build -o ${OUTPUT_DIR}/bin/check ./actions/check
 godep go build -o ${OUTPUT_DIR}/bin/in ./actions/in
 godep go build -o ${OUTPUT_DIR}/bin/out ./actions/out
 
-echo "test release name" > ${OUTPUT_DIR}/name
-echo "test release tag" > ${OUTPUT_DIR}/tag
+go get github.com/xchapter7x/versioning
+
+STAMP=$(date +"%Y%m%d%H%M")
+DRAFT_VERSION=`versioning bump_patch`-${STAMP}
+echo ${DRAFT_VERSION} > ${OUTPUT_DIR}/name
+echo ${DRAFT_VERSION} > ${OUTPUT_DIR}/tag
