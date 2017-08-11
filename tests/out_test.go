@@ -36,10 +36,11 @@ var _ = Describe("Out", func() {
 			From string   `json:"from"`
 		} `json:"source"`
 		Params struct {
-			Subject       string `json:"subject"`
-			Body          string `json:"body"`
-			SendEmptyBody bool   `json:"send_empty_body"`
-			Headers       string `json:"headers"`
+			Subject             string `json:"subject"`
+			Body                string `json:"body"`
+			SendEmptyBody       bool   `json:"send_empty_body"`
+			Headers             string `json:"headers"`
+			AdditionalRecipient string `json:"additional_recipient"`
 		} `json:"params"`
 	}
 
@@ -74,6 +75,7 @@ var _ = Describe("Out", func() {
 
 		inputs.Params.Subject = "some/path/to/subject.txt"
 		inputs.Params.Body = "some/other/path/to/body"
+		inputs.Params.AdditionalRecipient = "some/other/path/to/additionalRecipient"
 		createSource(inputs.Params.Subject, "some subject line")
 		createSource(inputs.Params.Body, `this is a body
 it has many lines
@@ -81,6 +83,7 @@ it has many lines
 even empty lines
 
 !`)
+		createSource(inputs.Params.AdditionalRecipient, "recipient+3@example.com \n")
 	})
 
 	JustBeforeEach(func() {
@@ -127,10 +130,10 @@ even empty lines
 		Expect(smtpServer.Deliveries).To(HaveLen(1))
 		delivery := smtpServer.Deliveries[0]
 		Expect(delivery.Sender).To(Equal("sender@example.com"))
-		Expect(delivery.Recipients).To(Equal([]string{"recipient@example.com", "recipient+2@example.com"}))
+		Expect(delivery.Recipients).To(Equal([]string{"recipient@example.com", "recipient+2@example.com", "recipient+3@example.com"}))
 
 		data := strings.Split(string(delivery.Data), "\n")
-		Expect(data).To(ContainElement("To: recipient@example.com, recipient+2@example.com"))
+		Expect(data).To(ContainElement("To: recipient@example.com, recipient+2@example.com, recipient+3@example.com"))
 		Expect(data).To(ContainElement("Subject: some subject line"))
 		Expect(string(delivery.Data)).To(ContainSubstring(`this is a body
 it has many lines
@@ -144,7 +147,7 @@ even empty lines
 		RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
 		Expect(smtpServer.Deliveries).To(HaveLen(1))
 		delivery := smtpServer.Deliveries[0]
-		Expect(delivery.Data).To(BeEquivalentTo(`To: recipient@example.com, recipient+2@example.com
+		Expect(delivery.Data).To(BeEquivalentTo(`To: recipient@example.com, recipient+2@example.com, recipient+3@example.com
 From: sender@example.com
 Subject: some subject line
 
@@ -183,6 +186,28 @@ even empty lines
 			Expect(smtpServer.Deliveries).To(HaveLen(1))
 			delivery := smtpServer.Deliveries[0]
 			Expect(delivery.Data).To(ContainSubstring(`Subject: some subject line
+
+this is a body
+it has many lines
+
+even empty lines
+
+!`))
+
+		})
+	})
+
+	Context("when the subject has template syntax", func() {
+		BeforeEach(func() {
+			os.Setenv("BUILD_ID", "5")
+			createSource(inputs.Params.Subject, "some subject line for #${BUILD_ID}")
+		})
+
+		It("strips the extra newline", func() {
+			RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
+			Expect(smtpServer.Deliveries).To(HaveLen(1))
+			delivery := smtpServer.Deliveries[0]
+			Expect(delivery.Data).To(ContainSubstring(`Subject: some subject line for #5
 
 this is a body
 it has many lines
@@ -309,16 +334,32 @@ Subject: some subject line
 	})
 
 	Context("when the 'To' is empty", func() {
-		It("should print an error and exit 1", func() {
-			inputs.Source.To = nil
-			inputBytes, err := json.Marshal(inputs)
-			Expect(err).NotTo(HaveOccurred())
-			inputdata = string(inputBytes)
+		Context("When the additional_recipient field is empty", func() {
+			It("should print an error and exit 1", func() {
+				inputs.Source.To = nil
+				inputs.Params.AdditionalRecipient = ""
+				inputBytes, err := json.Marshal(inputs)
+				Expect(err).NotTo(HaveOccurred())
+				inputdata = string(inputBytes)
 
-			output, err := RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
-			Expect(err).To(MatchError("exit status 1"))
-			Expect(output).To(Equal(`missing required field "source.to"`))
+				output, err := RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
+				Expect(err).To(MatchError("exit status 1"))
+				Expect(output).To(Equal(`missing required field "source.to" or "params.additional_recipient". Must specify at least one`))
+			})
 		})
+
+		Context("When the additional_recipient field is not empty", func() {
+			It("should succed", func() {
+				inputs.Source.To = nil
+				inputBytes, err := json.Marshal(inputs)
+				Expect(err).NotTo(HaveOccurred())
+				inputdata = string(inputBytes)
+
+				RunWithStdin(inputdata, "../bin/out", sourceRoot)
+
+			})
+		})
+
 	})
 
 	Context("when the 'source.smtp.username' is empty", func() {

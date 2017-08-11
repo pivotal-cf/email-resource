@@ -19,6 +19,14 @@ func main() {
 		os.Exit(1)
 	}
 
+	var buildTokens = map[string]string{
+		"${BUILD_ID}":            os.Getenv("BUILD_ID"),
+		"${BUILD_NAME}":          os.Getenv("BUILD_NAME"),
+		"${BUILD_JOB_NAME}":      os.Getenv("BUILD_JOB_NAME"),
+		"${BUILD_PIPELINE_NAME}": os.Getenv("BUILD_PIPELINE_NAME"),
+		"${ATC_EXTERNAL_URL}":    os.Getenv("ATC_EXTERNAL_URL"),
+	}
+
 	var indata struct {
 		Source struct {
 			SMTP struct {
@@ -32,10 +40,11 @@ func main() {
 			To   []string
 		}
 		Params struct {
-			Subject       string
-			Body          string
-			SendEmptyBody bool `json:"send_empty_body"`
-			Headers       string
+			Subject             string
+			Body                string
+			SendEmptyBody       bool `json:"send_empty_body"`
+			Headers             string
+			AdditionalRecipient string `json:"additional_recipient"`
 		}
 	}
 
@@ -65,8 +74,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	if len(indata.Source.To) == 0 {
-		fmt.Fprintf(os.Stderr, `missing required field "source.to"`)
+	if len(indata.Source.To) == 0 && len(indata.Params.AdditionalRecipient) == 0 {
+		fmt.Fprintf(os.Stderr, `missing required field "source.to" or "params.additional_recipient". Must specify at least one`)
 		os.Exit(1)
 	}
 
@@ -87,13 +96,20 @@ func main() {
 		}
 	}
 
+	replaceTokens := func(sourceString string) string {
+		for k, v := range buildTokens {
+			sourceString = strings.Replace(sourceString, k, v, -1)
+		}
+		return sourceString
+	}
+
 	readSource := func(sourcePath string) (string, error) {
 		if !filepath.IsAbs(sourcePath) {
 			sourcePath = filepath.Join(sourceRoot, sourcePath)
 		}
 
 		bytes, err := ioutil.ReadFile(sourcePath)
-		return string(bytes), err
+		return replaceTokens(string(bytes)), err
 	}
 
 	subject, err := readSource(indata.Params.Subject)
@@ -120,6 +136,22 @@ func main() {
 			fmt.Fprintf(os.Stderr, err.Error())
 			os.Exit(1)
 		}
+	}
+
+	var additionalRecipient string
+
+	if indata.Params.AdditionalRecipient != "" {
+		additionalRecipient, err = readSource(indata.Params.AdditionalRecipient)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, err.Error())
+			os.Exit(1)
+		}
+	}
+
+	if len(additionalRecipient) > 0 {
+		additionalRecipient = strings.Trim(additionalRecipient, "\n")
+		additionalRecipient = strings.TrimSpace(additionalRecipient)
+		indata.Source.To = append(indata.Source.To, additionalRecipient)
 	}
 
 	type MetadataItem struct {
