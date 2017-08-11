@@ -20,11 +20,11 @@ func main() {
 	}
 
 	var buildTokens = map[string]string{
-		"${BUILD_ID}":            os.Getenv("BUILD_ID"),
-		"${BUILD_NAME}":          os.Getenv("BUILD_NAME"),
-		"${BUILD_JOB_NAME}":      os.Getenv("BUILD_JOB_NAME"),
-		"${BUILD_PIPELINE_NAME}": os.Getenv("BUILD_PIPELINE_NAME"),
-		"${ATC_EXTERNAL_URL}":    os.Getenv("ATC_EXTERNAL_URL"),
+		"%BUILD_ID%":            os.Getenv("BUILD_ID"),
+		"%BUILD_NAME%":          os.Getenv("BUILD_NAME"),
+		"%BUILD_JOB_NAME%":      os.Getenv("BUILD_JOB_NAME"),
+		"%BUILD_PIPELINE_NAME%": os.Getenv("BUILD_PIPELINE_NAME"),
+		"%ATC_EXTERNAL_URL%":    os.Getenv("ATC_EXTERNAL_URL"),
 	}
 
 	var indata struct {
