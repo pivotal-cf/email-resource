@@ -26,10 +26,11 @@ var _ = Describe("Out", func() {
 	type inputStruct struct {
 		Source struct {
 			SMTP struct {
-				Host     string `json:"host"`
-				Port     string `json:"port"`
-				Username string `json:"username"`
-				Password string `json:"password"`
+				Host      string `json:"host"`
+				Port      string `json:"port"`
+				Username  string `json:"username"`
+				Password  string `json:"password"`
+				Anonymous bool   `json:"anonymous"`
 			} `json:"smtp"`
 			To   []string `json:"to"`
 			From string   `json:"from"`
@@ -329,7 +330,20 @@ Subject: some subject line
 
 			output, err := RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
 			Expect(err).To(MatchError("exit status 1"))
-			Expect(output).To(Equal(`missing required field "source.smtp.username"`))
+			Expect(output).To(Equal(`missing required field "source.smtp.username" if anonymous specify anonymous: true`))
+		})
+	})
+
+	Context("when the 'source.smtp.username' is empty and Anonymous", func() {
+		It("should not error", func() {
+			inputs.Source.SMTP.Username = ""
+			inputs.Source.SMTP.Anonymous = true
+			inputBytes, err := json.Marshal(inputs)
+			Expect(err).NotTo(HaveOccurred())
+			inputdata = string(inputBytes)
+
+			_, err = RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
+			Expect(err).ShouldNot(HaveOccurred())
 		})
 	})
 
@@ -342,7 +356,20 @@ Subject: some subject line
 
 			output, err := RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
 			Expect(err).To(MatchError("exit status 1"))
-			Expect(output).To(Equal(`missing required field "source.smtp.password"`))
+			Expect(output).To(Equal(`missing required field "source.smtp.password" if anonymous specify anonymous: true`))
+		})
+	})
+
+	Context("when the 'source.smtp.password' is empty and Anonymous", func() {
+		It("should not error", func() {
+			inputs.Source.SMTP.Password = ""
+			inputs.Source.SMTP.Anonymous = true
+			inputBytes, err := json.Marshal(inputs)
+			Expect(err).NotTo(HaveOccurred())
+			inputdata = string(inputBytes)
+
+			_, err = RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
+			Expect(err).ShouldNot(HaveOccurred())
 		})
 	})
 
