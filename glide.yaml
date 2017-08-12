@@ -1,0 +1,35 @@
+package: github.com/pivotal-cf/email-resource
+import:
+- package: bitbucket.org/chrj/smtpd
+  version: '''5f20925b9b440c14f2014dfe523f7a9e01068175'''
+testImport:
+- package: github.com/onsi/ginkgo
+  version: 25380c62e61d3f90436be125b8127dbae578fdef
+  subpackages:
+  - config
+  - internal/codelocation
+  - internal/containernode
+  - internal/failer
+  - internal/leafnodes
+  - internal/remote
+  - internal/spec
+  - internal/specrunner
+  - internal/suite
+  - internal/testingtproxy
+  - internal/writer
+  - reporters
+  - reporters/stenographer
+  - types
+- package: github.com/onsi/gomega
+  version: d6c945f9fdbf6cad99e85b0feff591caa268e0db
+  subpackages:
+  - format
+  - internal/assertion
+  - internal/asyncassertion
+  - internal/testingtsupport
+  - matchers
+  - matchers/support/goraph/bipartitegraph
+  - matchers/support/goraph/edge
+  - matchers/support/goraph/node
+  - matchers/support/goraph/util
+  - types

@@ -1,0 +1,36 @@
+hash: 72353a4b82200514c1b99b1683a4cb537c7ee2ab5a75cea20e31f6394a0c32c3
+updated: 2017-08-11T22:32:18.72176739-07:00
+imports:
+- name: bitbucket.org/chrj/smtpd
+  version: 5f20925b9b440c14f2014dfe523f7a9e01068175
+testImports:
+- name: github.com/onsi/ginkgo
+  version: 25380c62e61d3f90436be125b8127dbae578fdef
+  subpackages:
+  - config
+  - internal/codelocation
+  - internal/containernode
+  - internal/failer
+  - internal/leafnodes
+  - internal/remote
+  - internal/spec
+  - internal/specrunner
+  - internal/suite
+  - internal/testingtproxy
+  - internal/writer
+  - reporters
+  - reporters/stenographer
+  - types
+- name: github.com/onsi/gomega
+  version: d6c945f9fdbf6cad99e85b0feff591caa268e0db
+  subpackages:
+  - format
+  - internal/assertion
+  - internal/asyncassertion
+  - internal/testingtsupport
+  - matchers
+  - matchers/support/goraph/bipartitegraph
+  - matchers/support/goraph/edge
+  - matchers/support/goraph/node
+  - matchers/support/goraph/util
+  - types
