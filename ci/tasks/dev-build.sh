@@ -16,7 +16,7 @@ go get github.com/tools/godep
 go get github.com/xchapter7x/versioning
 
 cd ${SOURCE_DIR}
-DRAFT_VERSION=`versioning bump_patch`-`git rev-parse HEAD | cut -c1-6`
+DRAFT_VERSION=`versioning bump_patch`-`git rev-parse HEAD`
 echo "next version should be: ${DRAFT_VERSION}"
 
 mkdir -p ${WORKING_DIR}
