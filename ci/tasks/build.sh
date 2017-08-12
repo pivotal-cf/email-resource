@@ -23,9 +23,9 @@ mkdir -p ${WORKING_DIR}
 cp -R ${SOURCE_DIR}/* ${WORKING_DIR}/.
 cd ${WORKING_DIR}
 glide install
-go build -o ${OUTPUT_DIR}/bin/check ./actions/check
-go build -o ${OUTPUT_DIR}/bin/in ./actions/in
-go build -o ${OUTPUT_DIR}/bin/out -ldflags "-X main.VERSION=${DRAFT_VERSION}" ./actions/out
+go build -o ${OUTPUT_DIR}/bin/check ./check/cmd
+go build -o ${OUTPUT_DIR}/bin/in ./in/cmd
+go build -o ${OUTPUT_DIR}/bin/out -ldflags "-X main.VERSION=${DRAFT_VERSION}" ./out/cmd
 
 echo ${DRAFT_VERSION} > ${OUTPUT_DIR}/name
 echo ${DRAFT_VERSION} > ${OUTPUT_DIR}/tag

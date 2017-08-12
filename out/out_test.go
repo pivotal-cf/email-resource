@@ -1,4 +1,4 @@
-package email_resource_test
+package out_test
 
 import (
 	"encoding/json"
@@ -12,56 +12,32 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	. "github.com/onsi/gomega/gexec"
+	"github.com/pivotal-cf/email-resource/out"
 )
 
 var _ = Describe("Out", func() {
 	var inputdata string
 	var sourceRoot string
 	var smtpServer *FakeSMTPServer
-	type MetadataItem struct {
-		Name  string
-		Value string
-	}
 
-	type inputStruct struct {
-		Source struct {
-			SMTP struct {
-				Host      string `json:"host"`
-				Port      string `json:"port"`
-				Username  string `json:"username"`
-				Password  string `json:"password"`
-				Anonymous bool   `json:"anonymous"`
-			} `json:"smtp"`
-			To   []string `json:"to"`
-			From string   `json:"from"`
-		} `json:"source"`
-		Params struct {
-			Subject       string `json:"subject"`
-			Body          string `json:"body"`
-			SendEmptyBody bool   `json:"send_empty_body"`
-			Headers       string `json:"headers"`
-			To            string `json:"to"`
-		} `json:"params"`
-	}
-
-	var inputs inputStruct
+	var inputs out.Input
 
 	createSource := func(relativePath, contents string) {
 		absPath := path.Join(sourceRoot, relativePath)
 		Expect(os.MkdirAll(filepath.Dir(absPath), 0700)).To(Succeed())
 		Expect(ioutil.WriteFile(absPath, []byte(contents), 0600)).To(Succeed())
 	}
-
-	BeforeSuite(func() {
-		Run("go", "build", "-o", "../bin/out", "../actions/out")
+	It("should compile", func() {
+		_, err := Build("github.com/pivotal-cf/email-resource/out/cmd")
+		Ω(err).ShouldNot(HaveOccurred())
 	})
-
 	BeforeEach(func() {
 		smtpServer = NewFakeSMTPServer()
 		smtpServer.Boot()
 
 		var err error
-		inputs = inputStruct{}
+		inputs = out.Input{}
 		inputs.Source.SMTP.Username = "some username"
 		inputs.Source.SMTP.Password = "some password"
 		inputs.Source.SMTP.Host = smtpServer.Host
@@ -98,13 +74,10 @@ even empty lines
 	})
 
 	It("should report the current time as a version and exit 0", func() {
-		output := RunWithStdin(inputdata, "../bin/out", sourceRoot)
-
-		var outdata struct {
-			Version struct {
-				Time time.Time
-			}
-		}
+		output, err := out.Execute(sourceRoot, "the-version", []byte(inputdata))
+		Expect(err).ToNot(HaveOccurred())
+		Expect(output).ToNot(BeEmpty())
+		var outdata out.Output
 		Expect(json.Unmarshal([]byte(output), &outdata)).To(Succeed())
 		Expect(outdata.Version.Time).To(BeTemporally("~", time.Now(), 5*time.Second))
 
@@ -114,18 +87,20 @@ even empty lines
 	})
 
 	It("should report all the expected metadata fields", func() {
-		output := RunWithStdin(inputdata, "../bin/out", sourceRoot)
-
-		var outdata struct {
-			Metadata []MetadataItem
-		}
+		output, err := out.Execute(sourceRoot, "the-version", []byte(inputdata))
+		Expect(err).ToNot(HaveOccurred())
+		Expect(output).ToNot(BeEmpty())
+		var outdata out.Output
 		Expect(json.Unmarshal([]byte(output), &outdata)).To(Succeed())
-		Expect(outdata.Metadata).To(ContainElement(Equal(MetadataItem{Name: "smtp_host", Value: smtpServer.Host})))
-		Expect(outdata.Metadata).To(ContainElement(Equal(MetadataItem{Name: "subject", Value: "some subject line"})))
+		Expect(outdata.Metadata).To(ContainElement(Equal(out.MetadataItem{Name: "smtp_host", Value: smtpServer.Host})))
+		Expect(outdata.Metadata).To(ContainElement(Equal(out.MetadataItem{Name: "subject", Value: "some subject line"})))
+		Expect(outdata.Metadata).To(ContainElement(Equal(out.MetadataItem{Name: "version", Value: "the-version"})))
 	})
 
 	It("should send an email", func() {
-		RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
+		output, err := out.Execute(sourceRoot, "the-version", []byte(inputdata))
+		Expect(err).ToNot(HaveOccurred())
+		Expect(output).ToNot(BeEmpty())
 
 		Expect(smtpServer.Deliveries).To(HaveLen(1))
 		delivery := smtpServer.Deliveries[0]
@@ -144,7 +119,9 @@ even empty lines
 	})
 
 	It("makes sure that all headers are separate by one newline", func() {
-		RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
+		output, err := out.Execute(sourceRoot, "the-version", []byte(inputdata))
+		Expect(err).ToNot(HaveOccurred())
+		Expect(output).ToNot(BeEmpty())
 		Expect(smtpServer.Deliveries).To(HaveLen(1))
 		delivery := smtpServer.Deliveries[0]
 		Expect(delivery.Data).To(BeEquivalentTo(`To: recipient@example.com, recipient+2@example.com, recipient+3@example.com
@@ -162,7 +139,9 @@ even empty lines
 	})
 
 	It("adds a extra newline between the last header and the body", func() {
-		RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
+		output, err := out.Execute(sourceRoot, "the-version", []byte(inputdata))
+		Expect(err).ToNot(HaveOccurred())
+		Expect(output).ToNot(BeEmpty())
 		Expect(smtpServer.Deliveries).To(HaveLen(1))
 		delivery := smtpServer.Deliveries[0]
 		Expect(delivery.Data).To(ContainSubstring(`Subject: some subject line
@@ -182,7 +161,9 @@ even empty lines
 		})
 
 		It("strips the extra newline", func() {
-			RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
+			output, err := out.Execute(sourceRoot, "the-version", []byte(inputdata))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(output).ToNot(BeEmpty())
 			Expect(smtpServer.Deliveries).To(HaveLen(1))
 			delivery := smtpServer.Deliveries[0]
 			Expect(delivery.Data).To(ContainSubstring(`Subject: some subject line
@@ -204,7 +185,7 @@ even empty lines
 		})
 
 		It("strips the extra newline", func() {
-			RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
+			out.Execute(sourceRoot, "", []byte(inputdata))
 			Expect(smtpServer.Deliveries).To(HaveLen(1))
 			delivery := smtpServer.Deliveries[0]
 			Expect(delivery.Data).To(ContainSubstring(`Subject: some subject line for #5
@@ -232,7 +213,7 @@ Header-2: value`
 		})
 
 		It("should add the headers to the email", func() {
-			RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
+			out.Execute(sourceRoot, "", []byte(inputdata))
 
 			Expect(smtpServer.Deliveries).To(HaveLen(1))
 			delivery := smtpServer.Deliveries[0]
@@ -261,7 +242,7 @@ Header-3: value-3
 			})
 
 			It("strips the extra newline", func() {
-				RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
+				out.Execute(sourceRoot, "", []byte(inputdata))
 				Expect(smtpServer.Deliveries).To(HaveLen(1))
 				delivery := smtpServer.Deliveries[0]
 				Expect(delivery.Data).To(ContainSubstring(`Header-1: value-1
@@ -286,10 +267,10 @@ Subject: some subject line
 			It("should succeed and send a message with an empty body", func() {
 				inputBytes, err := json.Marshal(inputs)
 				Expect(err).NotTo(HaveOccurred())
-				inputdata = string(inputBytes)
 
-				RunWithStdin(inputdata, "../bin/out", sourceRoot)
-
+				output, err := out.Execute(sourceRoot, "", inputBytes)
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(output).ShouldNot(BeEmpty())
 				Expect(smtpServer.Deliveries).To(HaveLen(1))
 				delivery := smtpServer.Deliveries[0]
 				Expect(delivery.Data).To(HaveSuffix("Subject: some subject line\n\n"))
@@ -299,23 +280,16 @@ Subject: some subject line
 			BeforeEach(func() {
 				inputs.Params.SendEmptyBody = false
 			})
-			It("should succeed and not send a message", func() {
+
+			It("should return an error and not send a message", func() {
 				inputBytes, err := json.Marshal(inputs)
 				Expect(err).NotTo(HaveOccurred())
-				inputdata = string(inputBytes)
 
-				RunWithStdin(inputdata, "../bin/out", sourceRoot)
-
+				output, err := out.Execute(sourceRoot, "", inputBytes)
+				Expect(err).Should(HaveOccurred())
+				Expect(err.Error()).Should(BeEquivalentTo("Message not sent because the message body is empty and send_empty_body parameter was set to false. Github readme: https://github.com/pivotal-cf/email-resource"))
+				Expect(output).ShouldNot(BeEmpty())
 				Expect(smtpServer.Deliveries).To(HaveLen(0))
-			})
-
-			It("should print a message to stderr", func() {
-				inputBytes, err := json.Marshal(inputs)
-				Expect(err).NotTo(HaveOccurred())
-				inputdata = string(inputBytes)
-
-				output := RunWithStdin(inputdata, "../bin/out", sourceRoot)
-				Expect(output).To(ContainSubstring("Message not sent because the message body is empty and send_empty_body parameter was set to false. Github readme: https://github.com/pivotal-cf/email-resource"))
 			})
 		})
 	})
@@ -325,11 +299,11 @@ Subject: some subject line
 			inputs.Source.From = ""
 			inputBytes, err := json.Marshal(inputs)
 			Expect(err).NotTo(HaveOccurred())
-			inputdata = string(inputBytes)
 
-			output, err := RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
-			Expect(err).To(MatchError("exit status 1"))
-			Expect(output).To(Equal(`missing required field "source.from"`))
+			output, err := out.Execute(sourceRoot, "", inputBytes)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(BeEquivalentTo(`missing required field "source.from"`))
+			Expect(output).Should(BeEmpty())
 		})
 	})
 
@@ -340,11 +314,11 @@ Subject: some subject line
 				inputs.Params.To = ""
 				inputBytes, err := json.Marshal(inputs)
 				Expect(err).NotTo(HaveOccurred())
-				inputdata = string(inputBytes)
 
-				output, err := RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
-				Expect(err).To(MatchError("exit status 1"))
-				Expect(output).To(Equal(`missing required field "source.to" or "params.to". Must specify at least one`))
+				output, err := out.Execute(sourceRoot, "", inputBytes)
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(BeEquivalentTo(`missing required field "source.to" or "params.to". Must specify at least one`))
+				Expect(output).Should(BeEmpty())
 			})
 		})
 
@@ -353,9 +327,10 @@ Subject: some subject line
 				inputs.Source.To = nil
 				inputBytes, err := json.Marshal(inputs)
 				Expect(err).NotTo(HaveOccurred())
-				inputdata = string(inputBytes)
 
-				RunWithStdin(inputdata, "../bin/out", sourceRoot)
+				output, err := out.Execute(sourceRoot, "", inputBytes)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(output).ShouldNot(BeEmpty())
 
 			})
 		})
@@ -367,11 +342,10 @@ Subject: some subject line
 			inputs.Source.SMTP.Username = ""
 			inputBytes, err := json.Marshal(inputs)
 			Expect(err).NotTo(HaveOccurred())
-			inputdata = string(inputBytes)
 
-			output, err := RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
-			Expect(err).To(MatchError("exit status 1"))
-			Expect(output).To(Equal(`missing required field "source.smtp.username" if anonymous specify anonymous: true`))
+			output, err := out.Execute(sourceRoot, "", inputBytes)
+			Expect(err.Error()).To(BeEquivalentTo(`missing required field "source.smtp.username" if anonymous specify anonymous: true`))
+			Expect(output).Should(BeEmpty())
 		})
 	})
 
@@ -381,10 +355,10 @@ Subject: some subject line
 			inputs.Source.SMTP.Anonymous = true
 			inputBytes, err := json.Marshal(inputs)
 			Expect(err).NotTo(HaveOccurred())
-			inputdata = string(inputBytes)
 
-			_, err = RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
+			output, err := out.Execute(sourceRoot, "", inputBytes)
 			Expect(err).ShouldNot(HaveOccurred())
+			Expect(output).ShouldNot(BeEmpty())
 		})
 	})
 
@@ -393,11 +367,11 @@ Subject: some subject line
 			inputs.Source.SMTP.Password = ""
 			inputBytes, err := json.Marshal(inputs)
 			Expect(err).NotTo(HaveOccurred())
-			inputdata = string(inputBytes)
 
-			output, err := RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
-			Expect(err).To(MatchError("exit status 1"))
-			Expect(output).To(Equal(`missing required field "source.smtp.password" if anonymous specify anonymous: true`))
+			output, err := out.Execute(sourceRoot, "", inputBytes)
+			Expect(err).Should(HaveOccurred())
+			Expect(err.Error()).To(BeEquivalentTo(`missing required field "source.smtp.password" if anonymous specify anonymous: true`))
+			Expect(output).Should(BeEmpty())
 		})
 	})
 
@@ -407,39 +381,41 @@ Subject: some subject line
 			inputs.Source.SMTP.Anonymous = true
 			inputBytes, err := json.Marshal(inputs)
 			Expect(err).NotTo(HaveOccurred())
-			inputdata = string(inputBytes)
 
-			_, err = RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
+			output, err := out.Execute(sourceRoot, "", inputBytes)
 			Expect(err).ShouldNot(HaveOccurred())
+			Expect(output).ShouldNot(BeEmpty())
 		})
 	})
 
 	Context("When the STDIN is not valid JSON", func() {
 		It("should print an error and exit 1", func() {
-			output, err := RunWithStdinAllowError("not JSON", "../bin/out", sourceRoot)
-			Expect(err).To(MatchError("exit status 1"))
-			Expect(output).To(HavePrefix("error parsing input as JSON: "))
+			output, err := out.Execute(sourceRoot, "", []byte(""))
+			Expect(err).Should(HaveOccurred())
+			Expect(err.Error()).To(BeEquivalentTo("unexpected end of JSON input"))
+			Expect(output).Should(BeEmpty())
 		})
 	})
 
 	Context("when a sourceRoot is not provided as the first command-line argument", func() {
 		It("should print an error and exit 1", func() {
-			output, err := RunWithStdinAllowError(inputdata, "../bin/out", "")
-			Expect(output).To(Equal("expected path to build sources as first argument"))
-			Expect(err).To(MatchError("exit status 1"))
+			output, err := out.Execute("", "", []byte(inputdata))
+			Expect(err).Should(HaveOccurred())
+			Expect(err.Error()).To(BeEquivalentTo("expected path to build sources as first argument"))
+			Expect(output).Should(BeEmpty())
 		})
 	})
 
 	Context("when smtp server is not available", func() {
-		It("should print an error and exit 1", func() {
+		It("should return an error", func() {
 			inputs.Source.SMTP.Port = "1111"
 			inputBytes, err := json.Marshal(inputs)
 			Expect(err).NotTo(HaveOccurred())
 			inputdata = string(inputBytes)
-			output, err := RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
-			Expect(err).To(MatchError("exit status 1"))
-			Expect(output).To(Equal(fmt.Sprintf("Unable to send an email using SMTP server %s"+
-				" on port %s: dial tcp %s:%s: getsockopt: connection refused", inputs.Source.SMTP.Host, inputs.Source.SMTP.Port, inputs.Source.SMTP.Host, inputs.Source.SMTP.Port)))
+			output, err := out.Execute(sourceRoot, "", []byte(inputdata))
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal(fmt.Sprintf("dial tcp %s:%s: getsockopt: connection refused", inputs.Source.SMTP.Host, inputs.Source.SMTP.Port)))
+			Expect(output).Should(BeEmpty())
 		})
 	})
 
@@ -450,7 +426,9 @@ Subject: some subject line
 			Expect(err).NotTo(HaveOccurred())
 			inputBytes, _ := json.Marshal(inputs)
 
-			RunWithStdin(string(inputBytes), "../bin/out", sourceRoot)
+			output, err := out.Execute(sourceRoot, "", inputBytes)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(output).ShouldNot(BeEmpty())
 		})
 	})
 })

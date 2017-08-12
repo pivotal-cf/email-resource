@@ -1,9 +1,9 @@
-package main
+package out
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/smtp"
 	"os"
@@ -12,18 +12,8 @@ import (
 	"time"
 )
 
-var (
-	//VERSION -
-	VERSION string
-)
-
-func main() {
-	sourceRoot := os.Args[1]
-	if sourceRoot == "" {
-		fmt.Fprintf(os.Stderr, "expected path to build sources as first argument")
-		os.Exit(1)
-	}
-
+//Execute - provides out capability
+func Execute(sourceRoot, version string, input []byte) (string, error) {
 	var buildTokens = map[string]string{
 		"${BUILD_ID}":            os.Getenv("BUILD_ID"),
 		"${BUILD_NAME}":          os.Getenv("BUILD_NAME"),
@@ -32,72 +22,44 @@ func main() {
 		"${ATC_EXTERNAL_URL}":    os.Getenv("ATC_EXTERNAL_URL"),
 	}
 
-	var indata struct {
-		Source struct {
-			SMTP struct {
-				Host      string
-				Port      string
-				Username  string
-				Password  string
-				Anonymous bool `json:"anonymous"`
-			}
-			From string
-			To   []string
-		}
-		Params struct {
-			Subject       string
-			Body          string
-			SendEmptyBody bool `json:"send_empty_body"`
-			Headers       string
-			To            string `json:"to"`
-		}
+	if sourceRoot == "" {
+		return "", errors.New("expected path to build sources as first argument")
 	}
 
-	inbytes, err := ioutil.ReadAll(os.Stdin)
-	if err != nil {
-		panic(err)
-	}
+	var indata Input
 
-	err = json.Unmarshal(inbytes, &indata)
+	err := json.Unmarshal(input, &indata)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error parsing input as JSON: %s", err)
-		os.Exit(1)
+		return "", err
 	}
 
 	if indata.Source.SMTP.Host == "" {
-		fmt.Fprintf(os.Stderr, `missing required field "source.smtp.host"`)
-		os.Exit(1)
+		return "", errors.New(`missing required field "source.smtp.host"`)
 	}
 
 	if indata.Source.SMTP.Port == "" {
-		fmt.Fprintf(os.Stderr, `missing required field "source.smtp.port"`)
-		os.Exit(1)
+		return "", errors.New(`missing required field "source.smtp.port"`)
 	}
 
 	if indata.Source.From == "" {
-		fmt.Fprintf(os.Stderr, `missing required field "source.from"`)
-		os.Exit(1)
+		return "", errors.New(`missing required field "source.from"`)
 	}
 
 	if len(indata.Source.To) == 0 && len(indata.Params.To) == 0 {
-		fmt.Fprintf(os.Stderr, `missing required field "source.to" or "params.to". Must specify at least one`)
-		os.Exit(1)
+		return "", errors.New(`missing required field "source.to" or "params.to". Must specify at least one`)
 	}
 
 	if indata.Params.Subject == "" {
-		fmt.Fprintf(os.Stderr, `missing required field "params.subject"`)
-		os.Exit(1)
+		return "", errors.New(`missing required field "params.subject"`)
 	}
 
 	if indata.Source.SMTP.Anonymous == false {
 		if indata.Source.SMTP.Username == "" {
-			fmt.Fprintf(os.Stderr, `missing required field "source.smtp.username" if anonymous specify anonymous: true`)
-			os.Exit(1)
+			return "", errors.New(`missing required field "source.smtp.username" if anonymous specify anonymous: true`)
 		}
 
 		if indata.Source.SMTP.Password == "" {
-			fmt.Fprintf(os.Stderr, `missing required field "source.smtp.password" if anonymous specify anonymous: true`)
-			os.Exit(1)
+			return "", errors.New(`missing required field "source.smtp.password" if anonymous specify anonymous: true`)
 		}
 	}
 
@@ -119,8 +81,7 @@ func main() {
 
 	subject, err := readSource(indata.Params.Subject)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, err.Error())
-		os.Exit(1)
+		return "", err
 	}
 	subject = strings.Trim(subject, "\n")
 
@@ -128,8 +89,7 @@ func main() {
 	if indata.Params.Headers != "" {
 		headers, err = readSource(indata.Params.Headers)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, err.Error())
-			os.Exit(1)
+			return "", err
 		}
 		headers = strings.Trim(headers, "\n")
 	}
@@ -138,8 +98,7 @@ func main() {
 	if indata.Params.Body != "" {
 		body, err = readSource(indata.Params.Body)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, err.Error())
-			os.Exit(1)
+			return "", err
 		}
 	}
 
@@ -147,8 +106,7 @@ func main() {
 		var toList string
 		toList, err = readSource(indata.Params.To)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, err.Error())
-			os.Exit(1)
+			return "", err
 		}
 		if len(toList) > 0 {
 			toListArray := strings.Split(toList, ",")
@@ -158,25 +116,16 @@ func main() {
 		}
 	}
 
-	type MetadataItem struct {
-		Name  string
-		Value string
-	}
-	var outdata struct {
-		Version struct {
-			Time time.Time
-		} `json:"version"`
-		Metadata []MetadataItem
-	}
+	var outdata Output
 	outdata.Version.Time = time.Now().UTC()
 	outdata.Metadata = []MetadataItem{
 		{Name: "smtp_host", Value: indata.Source.SMTP.Host},
 		{Name: "subject", Value: subject},
-		{Name: "version", Value: VERSION},
+		{Name: "version", Value: version},
 	}
 	outbytes, err := json.Marshal(outdata)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
 	var messageData []byte
@@ -191,38 +140,17 @@ func main() {
 	messageData = append(messageData, []byte(body)...)
 
 	if indata.Params.SendEmptyBody == false && len(body) == 0 {
-		fmt.Fprintf(os.Stderr, "Message not sent because the message body is empty and send_empty_body parameter was set to false. Github readme: https://github.com/pivotal-cf/email-resource")
-		fmt.Printf("%s", []byte(outbytes))
-		return
+		return string(outbytes), errors.New("Message not sent because the message body is empty and send_empty_body parameter was set to false. Github readme: https://github.com/pivotal-cf/email-resource")
 	}
 
 	if indata.Source.SMTP.Anonymous {
-		var c *smtp.Client
-		var wc io.WriteCloser
-		c, err = smtp.Dial(fmt.Sprintf("%s:%s", indata.Source.SMTP.Host, indata.Source.SMTP.Port))
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error Dialing: "+err.Error())
-			os.Exit(1)
-		}
-		defer c.Close()
-		c.Mail(indata.Source.From)
-
-		for _, toAddress := range indata.Source.To {
-			c.Rcpt(toAddress)
-		}
-		// Send the email body.
-		wc, err = c.Data()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error Getting writer context: "+err.Error())
-			os.Exit(1)
-		}
-		defer wc.Close()
-		_, err = wc.Write(messageData)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error Writing bytes: "+err.Error())
-			os.Exit(1)
-		}
-
+		err = smtp.SendMail(
+			fmt.Sprintf("%s:%s", indata.Source.SMTP.Host, indata.Source.SMTP.Port),
+			nil,
+			indata.Source.From,
+			indata.Source.To,
+			messageData,
+		)
 	} else {
 		err = smtp.SendMail(
 			fmt.Sprintf("%s:%s", indata.Source.SMTP.Host, indata.Source.SMTP.Port),
@@ -238,10 +166,8 @@ func main() {
 		)
 	}
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to send an email using SMTP server %s on port %s: %v",
-			indata.Source.SMTP.Host, indata.Source.SMTP.Port, err)
-		os.Exit(1)
+		return "", err
 	}
 
-	fmt.Printf("%s", []byte(outbytes))
+	return string(outbytes), nil
 }

@@ -1,4 +1,4 @@
-package email_resource_test
+package out_test
 
 import (
 	"net"
