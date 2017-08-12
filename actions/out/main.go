@@ -12,6 +12,11 @@ import (
 	"time"
 )
 
+var (
+	//VERSION -
+	VERSION string
+)
+
 func main() {
 	sourceRoot := os.Args[1]
 	if sourceRoot == "" {
@@ -167,6 +172,7 @@ func main() {
 	outdata.Metadata = []MetadataItem{
 		{Name: "smtp_host", Value: indata.Source.SMTP.Host},
 		{Name: "subject", Value: subject},
+		{Name: "version", Value: VERSION},
 	}
 	outbytes, err := json.Marshal(outdata)
 	if err != nil {
