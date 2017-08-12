@@ -36,11 +36,11 @@ var _ = Describe("Out", func() {
 			From string   `json:"from"`
 		} `json:"source"`
 		Params struct {
-			Subject             string `json:"subject"`
-			Body                string `json:"body"`
-			SendEmptyBody       bool   `json:"send_empty_body"`
-			Headers             string `json:"headers"`
-			AdditionalRecipient string `json:"additional_recipient"`
+			Subject       string `json:"subject"`
+			Body          string `json:"body"`
+			SendEmptyBody bool   `json:"send_empty_body"`
+			Headers       string `json:"headers"`
+			To            string `json:"to"`
 		} `json:"params"`
 	}
 
@@ -75,7 +75,7 @@ var _ = Describe("Out", func() {
 
 		inputs.Params.Subject = "some/path/to/subject.txt"
 		inputs.Params.Body = "some/other/path/to/body"
-		inputs.Params.AdditionalRecipient = "some/other/path/to/additionalRecipient"
+		inputs.Params.To = "some/other/path/to/to"
 		createSource(inputs.Params.Subject, "some subject line")
 		createSource(inputs.Params.Body, `this is a body
 it has many lines
@@ -83,7 +83,7 @@ it has many lines
 even empty lines
 
 !`)
-		createSource(inputs.Params.AdditionalRecipient, "recipient+3@example.com \n")
+		createSource(inputs.Params.To, "recipient+3@example.com")
 	})
 
 	JustBeforeEach(func() {
@@ -334,21 +334,21 @@ Subject: some subject line
 	})
 
 	Context("when the 'To' is empty", func() {
-		Context("When the additional_recipient field is empty", func() {
+		Context("When the to field is empty", func() {
 			It("should print an error and exit 1", func() {
 				inputs.Source.To = nil
-				inputs.Params.AdditionalRecipient = ""
+				inputs.Params.To = ""
 				inputBytes, err := json.Marshal(inputs)
 				Expect(err).NotTo(HaveOccurred())
 				inputdata = string(inputBytes)
 
 				output, err := RunWithStdinAllowError(inputdata, "../bin/out", sourceRoot)
 				Expect(err).To(MatchError("exit status 1"))
-				Expect(output).To(Equal(`missing required field "source.to" or "params.additional_recipient". Must specify at least one`))
+				Expect(output).To(Equal(`missing required field "source.to" or "params.to". Must specify at least one`))
 			})
 		})
 
-		Context("When the additional_recipient field is not empty", func() {
+		Context("When the to field is not empty", func() {
 			It("should succed", func() {
 				inputs.Source.To = nil
 				inputBytes, err := json.Marshal(inputs)

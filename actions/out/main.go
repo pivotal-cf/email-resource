@@ -40,11 +40,11 @@ func main() {
 			To   []string
 		}
 		Params struct {
-			Subject             string
-			Body                string
-			SendEmptyBody       bool `json:"send_empty_body"`
-			Headers             string
-			AdditionalRecipient string `json:"additional_recipient"`
+			Subject       string
+			Body          string
+			SendEmptyBody bool `json:"send_empty_body"`
+			Headers       string
+			To            string `json:"to"`
 		}
 	}
 
@@ -74,8 +74,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	if len(indata.Source.To) == 0 && len(indata.Params.AdditionalRecipient) == 0 {
-		fmt.Fprintf(os.Stderr, `missing required field "source.to" or "params.additional_recipient". Must specify at least one`)
+	if len(indata.Source.To) == 0 && len(indata.Params.To) == 0 {
+		fmt.Fprintf(os.Stderr, `missing required field "source.to" or "params.to". Must specify at least one`)
 		os.Exit(1)
 	}
 
@@ -107,8 +107,8 @@ func main() {
 		if !filepath.IsAbs(sourcePath) {
 			sourcePath = filepath.Join(sourceRoot, sourcePath)
 		}
-
-		bytes, err := ioutil.ReadFile(sourcePath)
+		var bytes []byte
+		bytes, err = ioutil.ReadFile(sourcePath)
 		return replaceTokens(string(bytes)), err
 	}
 
@@ -138,20 +138,19 @@ func main() {
 		}
 	}
 
-	var additionalRecipient string
-
-	if indata.Params.AdditionalRecipient != "" {
-		additionalRecipient, err = readSource(indata.Params.AdditionalRecipient)
+	if indata.Params.To != "" {
+		var toList string
+		toList, err = readSource(indata.Params.To)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, err.Error())
 			os.Exit(1)
 		}
-	}
-
-	if len(additionalRecipient) > 0 {
-		additionalRecipient = strings.Trim(additionalRecipient, "\n")
-		additionalRecipient = strings.TrimSpace(additionalRecipient)
-		indata.Source.To = append(indata.Source.To, additionalRecipient)
+		if len(toList) > 0 {
+			toListArray := strings.Split(toList, ",")
+			for _, toAddress := range toListArray {
+				indata.Source.To = append(indata.Source.To, strings.TrimSpace(toAddress))
+			}
+		}
 	}
 
 	type MetadataItem struct {
