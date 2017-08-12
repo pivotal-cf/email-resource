@@ -77,9 +77,8 @@ This is an output-only resource, so `check` and `in` actions are no-ops.
 
 #### Parameters
 
-
 * `headers`: *Optional.* Path to plain text file containing additional mail headers
-* `additional_recipient`: *Optional.* Path to plain text file containing additional recipient which could be determined at build time. You can run a task before, which figures out the email of the person who committed last to a git repository (`git -C $source_path --no-pager show $(git -C $source_path rev-parse HEAD) -s --format='%ae' > output/email.txt`)
+* `to`: *Optional.* Path to plain text file containing recipients which could be determined at build time. You can run a task before, which figures out the email of the person who committed last to a git repository (`git -C $source_path --no-pager show $(git -C $source_path rev-parse HEAD) -s --format='%ae' > output/email.txt`).  This file can contain `,` delimited list of email address if wanting to send to multiples.
 * `subject`: *Required.* Path to plain text file containing the subject
 * `body`: *Required.* Path to file containing the email body.
 * `send_empty_body`: *Optional.* If true, send the email even if the body is empty (defaults to `false`).
@@ -88,8 +87,8 @@ For example, a build plan might contain this:
 ```yaml
   - put: send-an-email
     params:
-      subject: demo-prep-sha-email/generated-subject
-      body: demo-prep-sha-email/generated-body
+      subject: generated-subject
+      body: generated-body
 ```
 
 You can use the values below in any of the source files to access the corresponding metadata made available by concourse, as documented [here](http://concourse.ci/implementing-resources.html)
@@ -100,7 +99,7 @@ You can use the values below in any of the source files to access the correspond
 * `${BUILD_PIPELINE_NAME}`
 * `${ATC_EXTERNAL_URL}`
 
-For example `demo-prep-sha-email/generated-subject` could have content `Build ${BUILD_JOB_NAME} failed` which would result in the subject sent to be `Build demo-email-an-artifact-sha failed`
+For example `generated-subject` could have content `Build ${BUILD_JOB_NAME} failed` which would result in the subject sent to be `Build job-name failed`
 
 #### HTML Email
 

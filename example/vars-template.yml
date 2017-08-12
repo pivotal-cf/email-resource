@@ -1,0 +1,7 @@
+smtp-host:
+smtp-port:
+smtp-username:
+smtp-password:
+email-from:
+email-to:
+docker-tag: latest
