@@ -20,7 +20,7 @@ echo "next version should be: ${DRAFT_VERSION}"
 
 WORKING_DIR=$GOPATH/src/github.com/pivotal-cf/email-resource
 mkdir -p ${WORKING_DIR}
-cp -R source/* ${WORKING_DIR}/.
+cp -R ${SOURCE_DIR}/* ${WORKING_DIR}/.
 cd ${WORKING_DIR}
 godep go build -o ${OUTPUT_DIR}/bin/check ./actions/check
 godep go build -o ${OUTPUT_DIR}/bin/in ./actions/in
