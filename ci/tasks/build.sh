@@ -11,7 +11,7 @@ SOURCE_DIR=$PWD/source
 cp source/Dockerfile ${OUTPUT_DIR}/.
 cp /etc/ssl/certs/ca-certificates.crt ${OUTPUT_DIR}/ca-certificates.crt
 
-go get github.com/tools/godep
+go get github.com/Masterminds/glide
 go get github.com/xchapter7x/versioning
 
 cd ${SOURCE_DIR}
@@ -22,9 +22,10 @@ WORKING_DIR=$GOPATH/src/github.com/pivotal-cf/email-resource
 mkdir -p ${WORKING_DIR}
 cp -R ${SOURCE_DIR}/* ${WORKING_DIR}/.
 cd ${WORKING_DIR}
-godep go build -o ${OUTPUT_DIR}/bin/check ./actions/check
-godep go build -o ${OUTPUT_DIR}/bin/in ./actions/in
-godep go build -o ${OUTPUT_DIR}/bin/out -ldflags "-X main.VERSION=${DRAFT_VERSION}" ./actions/out
+glide install
+go build -o ${OUTPUT_DIR}/bin/check ./actions/check
+go build -o ${OUTPUT_DIR}/bin/in ./actions/in
+go build -o ${OUTPUT_DIR}/bin/out -ldflags "-X main.VERSION=${DRAFT_VERSION}" ./actions/out
 
 echo ${DRAFT_VERSION} > ${OUTPUT_DIR}/name
 echo ${DRAFT_VERSION} > ${OUTPUT_DIR}/tag
