@@ -19,6 +19,14 @@ func main() {
 		os.Exit(1)
 	}
 
+	var buildTokens = map[string]string{
+		"${BUILD_ID}":            os.Getenv("BUILD_ID"),
+		"${BUILD_NAME}":          os.Getenv("BUILD_NAME"),
+		"${BUILD_JOB_NAME}":      os.Getenv("BUILD_JOB_NAME"),
+		"${BUILD_PIPELINE_NAME}": os.Getenv("BUILD_PIPELINE_NAME"),
+		"${ATC_EXTERNAL_URL}":    os.Getenv("ATC_EXTERNAL_URL"),
+	}
+
 	var indata struct {
 		Source struct {
 			SMTP struct {
@@ -36,6 +44,7 @@ func main() {
 			Body          string
 			SendEmptyBody bool `json:"send_empty_body"`
 			Headers       string
+			To            string `json:"to"`
 		}
 	}
 
@@ -65,8 +74,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	if len(indata.Source.To) == 0 {
-		fmt.Fprintf(os.Stderr, `missing required field "source.to"`)
+	if len(indata.Source.To) == 0 && len(indata.Params.To) == 0 {
+		fmt.Fprintf(os.Stderr, `missing required field "source.to" or "params.to". Must specify at least one`)
 		os.Exit(1)
 	}
 
@@ -87,13 +96,20 @@ func main() {
 		}
 	}
 
+	replaceTokens := func(sourceString string) string {
+		for k, v := range buildTokens {
+			sourceString = strings.Replace(sourceString, k, v, -1)
+		}
+		return sourceString
+	}
+
 	readSource := func(sourcePath string) (string, error) {
 		if !filepath.IsAbs(sourcePath) {
 			sourcePath = filepath.Join(sourceRoot, sourcePath)
 		}
-
-		bytes, err := ioutil.ReadFile(sourcePath)
-		return string(bytes), err
+		var bytes []byte
+		bytes, err = ioutil.ReadFile(sourcePath)
+		return replaceTokens(string(bytes)), err
 	}
 
 	subject, err := readSource(indata.Params.Subject)
@@ -119,6 +135,21 @@ func main() {
 		if err != nil {
 			fmt.Fprintf(os.Stderr, err.Error())
 			os.Exit(1)
+		}
+	}
+
+	if indata.Params.To != "" {
+		var toList string
+		toList, err = readSource(indata.Params.To)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, err.Error())
+			os.Exit(1)
+		}
+		if len(toList) > 0 {
+			toListArray := strings.Split(toList, ",")
+			for _, toAddress := range toListArray {
+				indata.Source.To = append(indata.Source.To, strings.TrimSpace(toAddress))
+			}
 		}
 	}
 

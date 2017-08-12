@@ -34,7 +34,7 @@ Within smtp:
 
 Within source:
 * `from`: *Required.* Email Address to be sent from.
-* `to`: *Required.* Array of email addresses to send email to.
+* `to`: *Required.Conditionally.* Array of email addresses to send email to.  Not required if job params contains a file reference that has to recipients.
 
 An example source configuration is below.
 ```yaml
@@ -48,7 +48,7 @@ resources:
       username: a-user
       password: my-password
     from: build-system@example.com
-    to: [ "dev-team@example.com", "product@example.net" ]
+    to: [ "dev-team@example.com", "product@example.net" ] #optional if `params.additional_recipient` is specified
 ```
 
 An example source configuration is below supporting sending email when anonymous is permitted.
@@ -81,14 +81,34 @@ This is an output-only resource, so `check` and `in` actions are no-ops.
 * `subject`: *Required.* Path to plain text file containing the subject
 * `body`: *Required.* Path to file containing the email body.
 * `send_empty_body`: *Optional.* If true, send the email even if the body is empty (defaults to `false`).
+* `to`: *Optional.* Path to plain text file containing recipients which could be determined at build time. You can run a task before, which figures out the email of the person who committed last to a git repository (`git -C $source_path --no-pager show $(git -C $source_path rev-parse HEAD) -s --format='%ae' > output/email.txt`).  This file can contain `,` delimited list of email address if wanting to send to multiples.
 
 For example, a build plan might contain this:
 ```yaml
   - put: send-an-email
     params:
-      subject: demo-prep-sha-email/generated-subject
-      body: demo-prep-sha-email/generated-body
+      subject: generated-subject-file
+      body: generated-body-file
 ```
+
+For example, a build plan might contain this if using generated list of recipient(s):
+```yaml
+  - put: send-an-email
+    params:
+      subject: generated-subject-file
+      body: generated-body-file
+      to: generated-to-file
+```
+
+You can use the values below in any of the source files to access the corresponding metadata made available by concourse, as documented [here](http://concourse.ci/implementing-resources.html)
+
+* `${BUILD_ID}`
+* `${BUILD_NAME}`
+* `${BUILD_JOB_NAME}`
+* `${BUILD_PIPELINE_NAME}`
+* `${ATC_EXTERNAL_URL}`
+
+For example `generated-subject` could have content `Build ${BUILD_JOB_NAME} failed` which would result in the subject sent to be `Build job-name failed`
 
 #### HTML Email
 

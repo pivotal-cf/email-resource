@@ -1,0 +1,63 @@
+resource_types:
+  - name: email
+    type: docker-image
+    source:
+      repository: pcfseceng/email-resource
+      tag: {{docker-tag}}
+
+resources:
+  - name: email-resource-source
+    type: git
+    source:
+      uri: https://github.com/pivotal-cf/email-resource
+      branch: master
+  - name: send-an-email
+    type: email
+    source:
+      smtp:
+        host: {{smtp-host}}
+        port: {{smtp-port}}
+        username: {{smtp-username}}
+        password: {{smtp-password}}
+      from: {{email-from}}
+
+jobs:
+  - name: send-email
+    plan:
+      - get: email-resource-source
+      - task: prep-email
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: concourse/buildroot
+              tag: git
+          params:
+            OUTPUT_SUBJECT_FILE_NAME: generated-subject
+            OUTPUT_BODY_FILE_NAME: generated-body
+            OUTPUT_RECEPIENTS_FILE_NAME: generated-recepients
+          run:
+            path: sh
+            args:
+            - -exc
+            - |
+              `git -C email-resource-source --no-pager show $(git -C email-resource-source rev-parse HEAD) -s --format='%ae' > email-out/${OUTPUT_RECEPIENTS_FILE_NAME}`
+
+              # ensure you esape the ${BUILD_ID} variable with leading \
+              echo -e "Email resource dynamic recipient demo on $(date): build \${BUILD_ID}" > email-out/${OUTPUT_SUBJECT_FILE_NAME}
+              echo -e "Cheers!\n\n \
+              Build ID: \${BUILD_ID} \n \
+              Build Name: \${BUILD_NAME} \n \
+              Build Job Name: \${BUILD_JOB_NAME} \n \
+              Build Pipeline Name: \${BUILD_PIPELINE_NAME} \n \
+              ATC External URL: \${ATC_EXTERNAL_URL}" > email-out/${OUTPUT_BODY_FILE_NAME}
+          inputs:
+          - name: email-resource-source
+          outputs:
+          - name: email-out
+      - put: send-an-email
+        params:
+          subject: email-out/generated-subject
+          body: email-out/generated-body
+          to: email-out/generated-recepients
