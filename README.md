@@ -118,3 +118,29 @@ To send HTML email set the `headers` parameter to a file containing the followin
 MIME-version: 1.0
 Content-Type: text/html; charset="UTF-8"
 ```
+
+
+## Build from the source
+
+`email-resource` is written in [Go](https://golang.org/).
+To build the binary yourself, follow these steps:
+
+* Install `Go`.
+* Install [Glide](https://github.com/Masterminds/glide), a dependency management tool for Go.
+* Clone the repo:
+  - `mkdir -p $(go env GOPATH)/src/github.com/pivotal-cf`
+  - `cd $(go env GOPATH)/src/github.com/pivotal-cf`
+  - `git clone git@github.com:pivotal-cf/email-resource.git`
+* Install dependencies:
+  - `cd email-resource`
+  - `glide install`
+  - `go build -o bin/check check/cmd/*.go`
+  - `go build -o bin/in in/cmd/*.go`
+  - `go build -o bin/out out/cmd/*.go`
+
+To cross compile, set the `$GOOS` and `$GOARCH` environment variables.
+For example: `GOOS=linux GOARCH=amd64 go build`.
+
+## Testing
+
+To run the unit tests, use `go test $(glide nv)`.
