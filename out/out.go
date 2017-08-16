@@ -20,6 +20,7 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 		"${BUILD_JOB_NAME}":      os.Getenv("BUILD_JOB_NAME"),
 		"${BUILD_PIPELINE_NAME}": os.Getenv("BUILD_PIPELINE_NAME"),
 		"${ATC_EXTERNAL_URL}":    os.Getenv("ATC_EXTERNAL_URL"),
+		"${BUILD_TEAM_NAME}":     os.Getenv("BUILD_TEAM_NAME"),
 	}
 
 	if sourceRoot == "" {
