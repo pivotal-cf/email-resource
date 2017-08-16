@@ -107,6 +107,7 @@ You can use the values below in any of the source files to access the correspond
 * `${BUILD_JOB_NAME}`
 * `${BUILD_PIPELINE_NAME}`
 * `${ATC_EXTERNAL_URL}`
+* `${BUILD_TEAM_NAME}`
 
 For example `generated-subject` could have content `Build ${BUILD_JOB_NAME} failed` which would result in the subject sent to be `Build job-name failed`
 
