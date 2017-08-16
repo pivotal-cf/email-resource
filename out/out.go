@@ -52,8 +52,8 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 		return "", errors.New(`missing required field "source.to" or "params.to". Must specify at least one`)
 	}
 
-	if indata.Params.Subject == "" {
-		return "", errors.New(`missing required field "params.subject"`)
+	if indata.Params.Subject == "" && indata.Params.SubjectText == "" {
+		return "", errors.New(`missing required field "params.subject" or "params.subject_text". Must specify at least one`)
 	}
 
 	if indata.Source.SMTP.Anonymous == false {
@@ -82,7 +82,18 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 		return replaceTokens(string(bytes)), err
 	}
 
-	subject, err := readSource(indata.Params.Subject)
+	fromTextOrFile := func(text string, filePath string) (string, error) {
+		if text != "" {
+			return replaceTokens(text), nil
+
+		}
+		if filePath != "" {
+			return readSource(filePath)
+		}
+		return "", nil
+	}
+
+	subject, err := fromTextOrFile(indata.Params.SubjectText, indata.Params.Subject)
 	if err != nil {
 		return "", err
 	}
@@ -98,12 +109,9 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 		headers = strings.Trim(headers, "\n")
 	}
 
-	var body string
-	if indata.Params.Body != "" {
-		body, err = readSource(indata.Params.Body)
-		if err != nil {
-			return "", err
-		}
+	body, err := fromTextOrFile(indata.Params.BodyText, indata.Params.Body)
+	if err != nil {
+		return "", err
 	}
 
 	if indata.Params.To != "" {

@@ -118,6 +118,42 @@ even empty lines
 !`))
 	})
 
+	Context("when the 'Subject' parameter is empty", func() {
+		BeforeEach(func() {
+			inputs.Params.Subject = ""
+		})
+
+		Context("but the 'SubjectText' paramter is given", func() {
+			BeforeEach(func() {
+				inputs.Params.SubjectText = "some subject line"
+			})
+
+			It("succeeds and sends an email", func() {
+				output, err := out.Execute(sourceRoot, "the-version", []byte(inputdata))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(output).ToNot(BeEmpty())
+
+				Expect(smtpServer.Deliveries).To(HaveLen(1))
+				delivery := smtpServer.Deliveries[0]
+				data := strings.Split(string(delivery.Data), "\n")
+				Expect(data).To(ContainElement("Subject: some subject line"))
+			})
+		})
+
+		Context("and the 'SubjectText' paramter is empty", func() {
+			It("returns an error", func() {
+				inputBytes, err := json.Marshal(inputs)
+				Expect(err).NotTo(HaveOccurred())
+
+				output, err := out.Execute(sourceRoot, "", inputBytes)
+				Expect(err).Should(HaveOccurred())
+				Expect(err.Error()).Should(BeEquivalentTo(`missing required field "params.subject" or "params.subject_text". Must specify at least one`))
+				Expect(output).To(BeEmpty())
+				Expect(smtpServer.Deliveries).To(HaveLen(0))
+			})
+		})
+	})
+
 	Context("when the subject has an extra newline", func() {
 		BeforeEach(func() {
 			createSource(inputs.Params.Subject, "some subject line\n\n")
@@ -138,6 +174,36 @@ even empty lines
 		BeforeEach(func() {
 			os.Setenv("BUILD_ID", "5")
 			createSource(inputs.Params.Subject, "some subject line for #${BUILD_ID}")
+		})
+		var subject string
+
+		verifyTemplateInterpolation := func() {
+			out.Execute(sourceRoot, "", []byte(inputdata))
+			Expect(smtpServer.Deliveries).To(HaveLen(1))
+			delivery := smtpServer.Deliveries[0]
+			Expect(delivery.Data).To(ContainSubstring(`Subject: some subject line for #5`))
+		}
+
+		BeforeEach(func() {
+			os.Setenv("BUILD_ID", "5")
+			subject = "some subject line for #${BUILD_ID}"
+		})
+
+		Context("when the subject is given as file", func() {
+			BeforeEach(func() {
+				createSource(inputs.Params.Subject, subject)
+			})
+
+			It("interpolates the template", verifyTemplateInterpolation)
+		})
+
+		Context("when the subject is given as text", func() {
+			BeforeEach(func() {
+				inputs.Params.Subject = ""
+				inputs.Params.SubjectText = subject
+			})
+
+			It("interpolates the template", verifyTemplateInterpolation)
 		})
 	})
 
@@ -191,9 +257,52 @@ Header-3: value-3
 		})
 	})
 
-	Context("when the body is empty", func() {
+	Context("body", func() {
+
+		verifyBody := func(expectedBody string) func() {
+			return func() {
+				output, err := out.Execute(sourceRoot, "", []byte(inputdata))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(output).ToNot(BeEmpty())
+
+				Expect(smtpServer.Deliveries).To(HaveLen(1))
+				delivery := smtpServer.Deliveries[0]
+
+				Expect(string(delivery.Data)).To(ContainSubstring(expectedBody))
+			}
+		}
+
+		Context("when body file is provided", func() {
+			BeforeEach(func() {
+				createSource(inputs.Params.Body, "some body")
+				inputs.Params.BodyText = ""
+			})
+
+			It("uses the text from the body file", verifyBody("some body"))
+		})
+
+		Context("when body text is provided", func() {
+			BeforeEach(func() {
+				inputs.Params.Body = ""
+				inputs.Params.BodyText = "some body"
+			})
+			It("uses the body text", verifyBody("some body"))
+		})
+
+		Context("when body text and body file is provided", func() {
+			BeforeEach(func() {
+				createSource(inputs.Params.Body, "some body from file")
+				inputs.Params.BodyText = "some body from text"
+			})
+			It("uses the body text", verifyBody("some body from text"))
+		})
+
+	})
+
+	Context("when the body and the body_text is empty", func() {
 		BeforeEach(func() {
 			inputs.Params.Body = ""
+			inputs.Params.BodyText = ""
 		})
 
 		Context("when the 'SendEmptyBody' parameter is true", func() {

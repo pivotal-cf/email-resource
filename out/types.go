@@ -18,9 +18,12 @@ type Input struct {
 	}
 	Params struct {
 		Subject       string
+		SubjectText   string `json:"subject_text"`
 		Body          string
-		SendEmptyBody bool `json:"send_empty_body"`
+		BodyText      string `json:"body_text"`
+		SendEmptyBody bool   `json:"send_empty_body"`
 		Headers       string
+		HeadersText   string `json:"headers_text"`
 		To            string `json:"to"`
 	}
 }
