@@ -6,11 +6,12 @@ import "time"
 type Input struct {
 	Source struct {
 		SMTP struct {
-			Host      string
-			Port      string
-			Username  string
-			Password  string
-			Anonymous bool `json:"anonymous"`
+			Host              string
+			Port              string
+			Username          string
+			Password          string
+			Anonymous         bool `json:"anonymous"`
+			SkipSSLValidation bool `json:"skip_ssl_validation"`
 		}
 		From string
 		To   []string

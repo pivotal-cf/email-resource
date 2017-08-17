@@ -118,43 +118,6 @@ even empty lines
 !`))
 	})
 
-	It("makes sure that all headers are separate by one newline", func() {
-		output, err := out.Execute(sourceRoot, "the-version", []byte(inputdata))
-		Expect(err).ToNot(HaveOccurred())
-		Expect(output).ToNot(BeEmpty())
-		Expect(smtpServer.Deliveries).To(HaveLen(1))
-		delivery := smtpServer.Deliveries[0]
-		Expect(delivery.Data).To(BeEquivalentTo(`To: recipient@example.com, recipient+2@example.com, recipient+3@example.com
-From: sender@example.com
-Subject: some subject line
-
-this is a body
-it has many lines
-
-even empty lines
-
-!
-`))
-
-	})
-
-	It("adds a extra newline between the last header and the body", func() {
-		output, err := out.Execute(sourceRoot, "the-version", []byte(inputdata))
-		Expect(err).ToNot(HaveOccurred())
-		Expect(output).ToNot(BeEmpty())
-		Expect(smtpServer.Deliveries).To(HaveLen(1))
-		delivery := smtpServer.Deliveries[0]
-		Expect(delivery.Data).To(ContainSubstring(`Subject: some subject line
-
-this is a body
-it has many lines
-
-even empty lines
-
-!`))
-
-	})
-
 	Context("when the subject has an extra newline", func() {
 		BeforeEach(func() {
 			createSource(inputs.Params.Subject, "some subject line\n\n")
@@ -166,14 +129,7 @@ even empty lines
 			Expect(output).ToNot(BeEmpty())
 			Expect(smtpServer.Deliveries).To(HaveLen(1))
 			delivery := smtpServer.Deliveries[0]
-			Expect(delivery.Data).To(ContainSubstring(`Subject: some subject line
-
-this is a body
-it has many lines
-
-even empty lines
-
-!`))
+			Expect(delivery.Data).To(ContainSubstring("Subject: some subject line"))
 
 		})
 	})
@@ -183,21 +139,6 @@ even empty lines
 			os.Setenv("BUILD_ID", "5")
 			createSource(inputs.Params.Subject, "some subject line for #${BUILD_ID}")
 		})
-
-		It("strips the extra newline", func() {
-			out.Execute(sourceRoot, "", []byte(inputdata))
-			Expect(smtpServer.Deliveries).To(HaveLen(1))
-			delivery := smtpServer.Deliveries[0]
-			Expect(delivery.Data).To(ContainSubstring(`Subject: some subject line for #5
-
-this is a body
-it has many lines
-
-even empty lines
-
-!`))
-
-		})
 	})
 
 	Context("when a headers file is provided", func() {
@@ -205,7 +146,9 @@ even empty lines
 
 		BeforeEach(func() {
 			headers = `Header-1: value
-Header-2: value`
+Header-2: value
+MIME-version: 4.0
+Content-Type: text/html; charset="UTF-8"`
 
 			headersFilePath := "some/path/to/headers.txt"
 			createSource(headersFilePath, headers)
@@ -217,10 +160,10 @@ Header-2: value`
 
 			Expect(smtpServer.Deliveries).To(HaveLen(1))
 			delivery := smtpServer.Deliveries[0]
-
-			data := strings.Split(string(delivery.Data), "\n")
-			Expect(data).To(ContainElement("Header-1: value"))
-			Expect(data).To(ContainElement("Header-2: value"))
+			Expect(delivery.Data).To(ContainSubstring("Header-1: value\n"))
+			Expect(delivery.Data).To(ContainSubstring("Header-2: value\n"))
+			Expect(delivery.Data).To(ContainSubstring("Mime-Version: 1.0\n"))
+			Expect(delivery.Data).To(ContainSubstring("Content-Type: text/html; charset=UTF-8\n"))
 			Expect(string(delivery.Data)).To(ContainSubstring(`
 this is a body
 it has many lines
@@ -245,12 +188,9 @@ Header-3: value-3
 				out.Execute(sourceRoot, "", []byte(inputdata))
 				Expect(smtpServer.Deliveries).To(HaveLen(1))
 				delivery := smtpServer.Deliveries[0]
-				Expect(delivery.Data).To(ContainSubstring(`Header-1: value-1
-Header-2: value-2
-Header-3: value-3
-Subject: some subject line
-
-`))
+				Expect(delivery.Data).To(ContainSubstring("Header-1: value-1\n"))
+				Expect(delivery.Data).To(ContainSubstring("Header-2: value-2\n"))
+				Expect(delivery.Data).To(ContainSubstring("Header-3: value-3\n"))
 			})
 		})
 	})
@@ -273,7 +213,7 @@ Subject: some subject line
 				Expect(output).ShouldNot(BeEmpty())
 				Expect(smtpServer.Deliveries).To(HaveLen(1))
 				delivery := smtpServer.Deliveries[0]
-				Expect(delivery.Data).To(HaveSuffix("Subject: some subject line\n\n"))
+				Expect(delivery.Data).To(ContainSubstring("Subject: some subject line\n"))
 			})
 		})
 		Context("when the 'SendEmptyBody' parameter is false", func() {

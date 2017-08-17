@@ -31,6 +31,7 @@ Within smtp:
 * `anonymous`: *Optional.* Whether or not to require credential.  true/false are valid options.  If omitted default is false
 * `username`: *Required, Conditionally.* Username to authenticate with.  Ignored if `anonymous: true`
 * `password`: *Required, Conditionally.* Password to authenticate with.  Ignored if `anonymous: true`
+* `skip_ssl_validation`: *Optional.* Whether or not to skip ssl validation.  true/false are valid options.  If omitted default is false
 
 Within source:
 * `from`: *Required.* Email Address to be sent from.
