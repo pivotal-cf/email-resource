@@ -22,8 +22,10 @@ func main() {
 	}
 	output, err := out.Execute(sourceRoot, VERSION, inbytes)
 	if err != nil {
+		if output != "" {
+			fmt.Fprintln(os.Stderr, output)
+		}
 		fmt.Fprintln(os.Stderr, err.Error())
-		fmt.Println(output)
 		os.Exit(1)
 	}
 	fmt.Println(output)
