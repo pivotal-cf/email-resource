@@ -168,9 +168,6 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 	if indata.Source.SMTP.SkipSSLValidation {
 		dialer.TLSConfig = &tls.Config{InsecureSkipVerify: indata.Source.SMTP.SkipSSLValidation}
 	}
-	if err = dialer.DialAndSend(m); err != nil {
-		return "", err
-	}
-
-	return string(outbytes), nil
+	err = dialer.DialAndSend(m)
+	return string(outbytes), err
 }

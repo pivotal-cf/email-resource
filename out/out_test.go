@@ -354,7 +354,7 @@ Header-3: value-3
 			output, err := out.Execute(sourceRoot, "", []byte(inputdata))
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal(fmt.Sprintf("dial tcp %s:%s: getsockopt: connection refused", inputs.Source.SMTP.Host, inputs.Source.SMTP.Port)))
-			Expect(output).Should(BeEmpty())
+			Expect(output).ShouldNot(BeEmpty())
 		})
 	})
 
