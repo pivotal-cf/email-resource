@@ -1,0 +1,44 @@
+resource_types:
+  - name: email
+    type: docker-image
+    source:
+      repository: pcfseceng/email-resource
+      tag: {{docker-tag}}
+
+resources:
+  - name: send-an-email
+    type: email
+    source:
+      smtp:
+        host: {{smtp-host}}
+        port: {{smtp-port}}
+        username: {{smtp-username}}
+        password: {{smtp-password}}
+      from: {{email-from}}
+      to: [ {{email-to}} ]
+
+jobs:
+  - name: send-email
+    plan:
+      - task: prep-email
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: concourse/buildroot
+              tag: git
+          params:
+            OUTPUT_SUBJECT_FILE_NAME: generated-subject
+          run:
+            path: sh
+            args:
+            - -exc
+            - |
+              # ensure you esape the ${BUILD_ID} variable with leading \
+              echo -e "Email resource demo on $(date): build \${BUILD_ID}" > email-out/${OUTPUT_SUBJECT_FILE_NAME}
+          outputs:
+          - name: email-out
+      - put: send-an-email
+        params:
+          subject: email-out/generated-subject
