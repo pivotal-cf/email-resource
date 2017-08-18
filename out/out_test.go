@@ -221,13 +221,12 @@ Header-3: value-3
 				inputs.Params.SendEmptyBody = false
 			})
 
-			It("should return an error and not send a message", func() {
+			It("should not return an error and not send a message", func() {
 				inputBytes, err := json.Marshal(inputs)
 				Expect(err).NotTo(HaveOccurred())
 
 				output, err := out.Execute(sourceRoot, "", inputBytes)
-				Expect(err).Should(HaveOccurred())
-				Expect(err.Error()).Should(BeEquivalentTo("Message not sent because the message body is empty and send_empty_body parameter was set to false. Github readme: https://github.com/pivotal-cf/email-resource"))
+				Expect(err).ShouldNot(HaveOccurred())
 				Expect(output).ShouldNot(BeEmpty())
 				Expect(smtpServer.Deliveries).To(HaveLen(0))
 			})
