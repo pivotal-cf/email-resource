@@ -146,8 +146,8 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 	}
 
 	if indata.Params.SendEmptyBody == false && len(body) == 0 {
-		fmt.Fprintf(os.Stderr, "Message not sent because the message body is empty and send_empty_body parameter was set to false. Github readme: https://github.com/pivotal-cf/email-resource")
 		fmt.Printf("%s", []byte(outbytes))
+		fmt.Fprintf(os.Stderr, "Message not sent because the message body is empty and send_empty_body parameter was set to false. Github readme: https://github.com/pivotal-cf/email-resource")
 		return string(outbytes), nil
 	}
 	m := gomail.NewMessage()
