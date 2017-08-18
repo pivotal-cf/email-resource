@@ -5,14 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"net/smtp"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
-
-	"gopkg.in/gomail.v2"
 )
 
 //Execute - provides out capability
@@ -89,26 +88,14 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 	}
 	subject = strings.Trim(subject, "\n")
 
-	contentType := "text/plain"
-	headerMap := make(map[string][]string)
+	var headers string
 	if indata.Params.Headers != "" {
-		var headers string
 		headers, err = readSource(indata.Params.Headers)
 		if err != nil {
-			return "", err
+			fmt.Fprintf(os.Stderr, err.Error())
+			os.Exit(1)
 		}
-		for _, line := range strings.Split(strings.Trim(headers, "\n"), "\n") {
-			header := strings.Split(line, ": ")
-			headerKey := strings.TrimSpace(header[0])
-			if headerKey == "Content-Type" {
-				contentType = strings.Split(header[1], ";")[0]
-			} else if strings.ToUpper(headerKey) == "MIME-VERSION" {
-				//do nothing....
-			} else {
-				headerMap[strings.TrimSpace(header[0])] = header[1:]
-			}
-		}
-
+		headers = strings.Trim(headers, "\n")
 	}
 
 	var body string
@@ -149,25 +136,75 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 		fmt.Fprintf(os.Stderr, "Message not sent because the message body is empty and send_empty_body parameter was set to false. Github readme: https://github.com/pivotal-cf/email-resource")
 		return string(outbytes), nil
 	}
-	m := gomail.NewMessage()
-	m.SetHeader("From", indata.Source.From)
-	m.SetHeader("To", indata.Source.To...)
-	if len(headerMap) > 0 {
-		m.SetHeaders(headerMap)
+	var messageData []byte
+	messageData = append(messageData, []byte("To: "+strings.Join(indata.Source.To, ", ")+"\n")...)
+	if headers != "" {
+		messageData = append(messageData, []byte(headers+"\n")...)
 	}
-	m.SetHeader("Subject", subject)
-	m.SetBody(contentType, body)
+	messageData = append(messageData, []byte("Subject: "+subject+"\n")...)
 
-	var dialer *gomail.Dialer
-	port, err := strconv.Atoi(indata.Source.SMTP.Port)
-	if indata.Source.SMTP.Anonymous {
-		dialer = gomail.NewDialer(indata.Source.SMTP.Host, port, "", "")
-	} else {
-		dialer = gomail.NewDialer(indata.Source.SMTP.Host, port, indata.Source.SMTP.Username, indata.Source.SMTP.Password)
+	messageData = append(messageData, []byte("\n")...)
+	messageData = append(messageData, []byte(body)...)
+
+	var c *smtp.Client
+	var wc io.WriteCloser
+	c, err = smtp.Dial(fmt.Sprintf("%s:%s", indata.Source.SMTP.Host, indata.Source.SMTP.Port))
+	if err != nil {
+		return "", err
 	}
-	if indata.Source.SMTP.SkipSSLValidation {
-		dialer.TLSConfig = &tls.Config{InsecureSkipVerify: indata.Source.SMTP.SkipSSLValidation}
+	defer c.Close()
+
+	if !indata.Source.SMTP.Anonymous {
+		auth := smtp.PlainAuth(
+			"",
+			indata.Source.SMTP.Username,
+			indata.Source.SMTP.Password,
+			indata.Source.SMTP.Host,
+		)
+		if err = c.Hello("localhost"); err != nil {
+			return "", err
+		}
+		if ok, _ := c.Extension("STARTTLS"); ok {
+			config := &tls.Config{
+				ServerName:         indata.Source.SMTP.Host,
+				InsecureSkipVerify: indata.Source.SMTP.SkipSSLValidation,
+			}
+			if err = c.StartTLS(config); err != nil {
+				return "", err
+			}
+		}
+		if auth != nil {
+			if ok, _ := c.Extension("AUTH"); ok {
+				if err = c.Auth(auth); err != nil {
+					return "", err
+				}
+			}
+		}
 	}
-	err = dialer.DialAndSend(m)
+	if err = c.Mail(indata.Source.From); err != nil {
+		return "", err
+	}
+	for _, addr := range indata.Source.To {
+		if err = c.Rcpt(addr); err != nil {
+			return "", err
+		}
+	}
+	wc, err = c.Data()
+	if err != nil {
+		return "", err
+	}
+	_, err = wc.Write(messageData)
+	if err != nil {
+		return "", err
+	}
+	err = wc.Close()
+	if err != nil {
+		return "", err
+	}
+	err = c.Quit()
+	if err != nil {
+		return "", err
+	}
+
 	return string(outbytes), err
 }

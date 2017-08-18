@@ -1,7 +1,5 @@
 package: github.com/pivotal-cf/email-resource
 import:
-- package: gopkg.in/gomail.v2
-  version: ^2.0.0
 testImport:
 - package: github.com/onsi/ginkgo
   version: 25380c62e61d3f90436be125b8127dbae578fdef
