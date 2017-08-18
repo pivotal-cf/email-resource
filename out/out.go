@@ -163,7 +163,9 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 	} else {
 		dialer = gomail.NewDialer(indata.Source.SMTP.Host, port, indata.Source.SMTP.Username, indata.Source.SMTP.Password)
 	}
-	dialer.TLSConfig = &tls.Config{InsecureSkipVerify: indata.Source.SMTP.SkipSSLValidation}
+	if indata.Source.SMTP.SkipSSLValidation {
+		dialer.TLSConfig = &tls.Config{InsecureSkipVerify: indata.Source.SMTP.SkipSSLValidation}
+	}
 	if err = dialer.DialAndSend(m); err != nil {
 		return "", err
 	}
