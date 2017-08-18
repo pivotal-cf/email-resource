@@ -1,11 +1,9 @@
-hash: 80087e72bce0aae1e45e1b8b3a6611521ece40def153261b504a6f38e02c539a
-updated: 2017-08-17T00:08:46.628231431-04:00
-imports:
-- name: gopkg.in/gomail.v2
-  version: 81ebce5c23dfd25c6c67194b37d3dd3f338c98b1
+hash: 0eed8841e6bbbef4649c518008c811412de98edd0afded7fa80427dcaab3cf74
+updated: 2017-08-18T14:26:07.750688901-07:00
+imports: []
 testImports:
 - name: bitbucket.org/chrj/smtpd
-  version: 9fc0f9794f672edb9b8f16b3a3fc03fef8e45a42
+  version: 9ddcdbda0f7aebfb78b38b5688a50764d72ef78d
 - name: github.com/onsi/ginkgo
   version: 25380c62e61d3f90436be125b8127dbae578fdef
   subpackages:

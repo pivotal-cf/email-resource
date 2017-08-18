@@ -146,9 +146,7 @@ even empty lines
 
 		BeforeEach(func() {
 			headers = `Header-1: value
-Header-2: value
-MIME-version: 4.0
-Content-Type: text/html; charset="UTF-8"`
+Header-2: value`
 
 			headersFilePath := "some/path/to/headers.txt"
 			createSource(headersFilePath, headers)
@@ -162,8 +160,6 @@ Content-Type: text/html; charset="UTF-8"`
 			delivery := smtpServer.Deliveries[0]
 			Expect(delivery.Data).To(ContainSubstring("Header-1: value\n"))
 			Expect(delivery.Data).To(ContainSubstring("Header-2: value\n"))
-			Expect(delivery.Data).To(ContainSubstring("Mime-Version: 1.0\n"))
-			Expect(delivery.Data).To(ContainSubstring("Content-Type: text/html; charset=UTF-8\n"))
 			Expect(string(delivery.Data)).To(ContainSubstring(`
 this is a body
 it has many lines
