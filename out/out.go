@@ -160,7 +160,11 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 
 	var dialer *gomail.Dialer
 	port, err := strconv.Atoi(indata.Source.SMTP.Port)
-	dialer = gomail.NewDialer(indata.Source.SMTP.Host, port, indata.Source.SMTP.Username, indata.Source.SMTP.Password)
+	if indata.Source.SMTP.Anonymous {
+		dialer = gomail.NewDialer(indata.Source.SMTP.Host, port, "", "")
+	} else {
+		dialer = gomail.NewDialer(indata.Source.SMTP.Host, port, indata.Source.SMTP.Username, indata.Source.SMTP.Password)
+	}
 	if indata.Source.SMTP.SkipSSLValidation {
 		dialer.TLSConfig = &tls.Config{InsecureSkipVerify: indata.Source.SMTP.SkipSSLValidation}
 	}
