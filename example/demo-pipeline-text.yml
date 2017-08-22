@@ -1,0 +1,33 @@
+resource_types:
+  - name: email
+    type: docker-image
+    source:
+      repository: pcfseceng/email-resource
+      tag: {{docker-tag}}
+
+resources:
+  - name: send-an-email
+    type: email
+    source:
+      smtp:
+        host: {{smtp-host}}
+        port: {{smtp-port}}
+        username: {{smtp-username}}
+        password: {{smtp-password}}
+      from: {{email-from}}
+      to: [ {{email-to}} ]
+
+jobs:
+  - name: send-email
+    plan:
+      - put: send-an-email
+        params:
+          subject_text: "Email resource: build ${BUILD_ID}"
+          body_text: |
+            Cheers!
+
+            Build ID: ${BUILD_ID}
+            Build Name: ${BUILD_NAME}
+            Build Job Name: ${BUILD_JOB_NAME}
+            Build Pipeline Name: ${BUILD_PIPELINE_NAME}
+            ATC External URL: ${ATC_EXTERNAL_URL}
