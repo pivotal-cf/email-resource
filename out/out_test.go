@@ -73,6 +73,64 @@ even empty lines
 		os.RemoveAll(sourceRoot)
 	})
 
+	Describe("Using custom certificates", func() {
+		var smtpServerCa *FakeSMTPServer
+
+		BeforeEach(func() {
+			smtpServerCa = NewFakeSMTPServerWithCustomCert("./test_certs/server.crt", "./test_certs/server.key")
+			smtpServerCa.Boot()
+
+			inputs.Source.SMTP.Host = smtpServerCa.Host
+			inputs.Source.SMTP.Port = smtpServerCa.Port
+		})
+
+		AfterEach(func() {
+			smtpServerCa.Close()
+		})
+
+		Context("when no custom certificate is configured", func() {
+			failWithCertificateError := func() {
+				output, err := out.Execute(sourceRoot, "the-version", []byte(inputdata))
+
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(BeEquivalentTo(`x509: certificate signed by unknown authority`))
+				Expect(output).Should(BeEmpty())
+			}
+
+			BeforeEach(func() {
+				inputs.Source.SMTP.CaCert = ""
+			})
+
+			It("fails with an error", failWithCertificateError)
+
+			Context("when 'anonymous' is 'true'", func() {
+				BeforeEach(func() {
+					inputs.Source.SMTP.Anonymous = true
+				})
+
+				It("still fails with an error", failWithCertificateError)
+			})
+		})
+
+		Context("when a custom certificate is configured", func() {
+			BeforeEach(func() {
+				caCert, err := ioutil.ReadFile("./test_certs/rootCA.pem")
+				if err != nil {
+					panic(err)
+				}
+
+				inputs.Source.SMTP.CaCert = string(caCert)
+			})
+
+			It("can connect to the server", func() {
+				output, err := out.Execute(sourceRoot, "the-version", []byte(inputdata))
+
+				Expect(err).ToNot(HaveOccurred())
+				Expect(output).ToNot(BeEmpty())
+			})
+		})
+	})
+
 	It("should report the current time as a version and exit 0", func() {
 		output, err := out.Execute(sourceRoot, "the-version", []byte(inputdata))
 		Expect(err).ToNot(HaveOccurred())

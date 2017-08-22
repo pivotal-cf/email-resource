@@ -32,6 +32,7 @@ Within smtp:
 * `username`: *Required, Conditionally.* Username to authenticate with.  Ignored if `anonymous: true`
 * `password`: *Required, Conditionally.* Password to authenticate with.  Ignored if `anonymous: true`
 * `skip_ssl_validation`: *Optional.* Whether or not to skip ssl validation.  true/false are valid options.  If omitted default is false
+* `ca_cert`: *Optional.* Certificates content to verify servers with custom certificates. Only considered if `skip_ssl_validation` is `false`.
 
 Within source:
 * `from`: *Required.* Email Address to be sent from.
@@ -64,6 +65,24 @@ resources:
       anonymous: true
     from: build-system@example.com
     to: [ "dev-team@example.com", "product@example.net" ]
+```
+
+An exmaple using custom certificates:
+```yaml
+resources:
+- name: send-an-email
+  type: email
+  source:
+    smtp:
+      host: smtp.example.com
+      port: "587" # this must be a string
+      anonymous: true
+      ca_cert: |
+        -----BEGIN CERTIFICATE-----
+        ...
+        -----END CERTIFICATE-----
+    from: build-system@example.com
+    to: [ "dev-team@example.com", "product@example.net" ] 
 ```
 Note that `to` is an array, and that `port` is a string.
 If you're using `fly configure` with the `--load-vars-from` (`-l`) substitutions, every `{{ variable }}`

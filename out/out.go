@@ -2,6 +2,7 @@ package out
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -163,6 +164,17 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 	}
 	defer c.Close()
 
+	if err = c.Hello("localhost"); err != nil {
+		return "", err
+	}
+	if ok, _ := c.Extension("STARTTLS"); ok {
+		config := tlsConfig(indata)
+
+		if err = c.StartTLS(config); err != nil {
+			return "", err
+		}
+	}
+
 	if !indata.Source.SMTP.Anonymous {
 		auth := smtp.PlainAuth(
 			"",
@@ -170,18 +182,6 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 			indata.Source.SMTP.Password,
 			indata.Source.SMTP.Host,
 		)
-		if err = c.Hello("localhost"); err != nil {
-			return "", err
-		}
-		if ok, _ := c.Extension("STARTTLS"); ok {
-			config := &tls.Config{
-				ServerName:         indata.Source.SMTP.Host,
-				InsecureSkipVerify: indata.Source.SMTP.SkipSSLValidation,
-			}
-			if err = c.StartTLS(config); err != nil {
-				return "", err
-			}
-		}
 		if auth != nil {
 			if ok, _ := c.Extension("AUTH"); ok {
 				if err = c.Auth(auth); err != nil {
@@ -216,4 +216,26 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 	}
 
 	return string(outbytes), err
+}
+
+func tlsConfig(indata Input) *tls.Config {
+	config := &tls.Config{
+		ServerName: indata.Source.SMTP.Host,
+	}
+
+	if indata.Source.SMTP.SkipSSLValidation {
+		config.InsecureSkipVerify = indata.Source.SMTP.SkipSSLValidation
+		return config
+	}
+
+	if indata.Source.SMTP.CaCert != "" {
+		caPool := x509.NewCertPool()
+		caPool.AppendCertsFromPEM([]byte(indata.Source.SMTP.CaCert))
+
+		config.RootCAs = caPool
+
+		return config
+	}
+
+	return config
 }
