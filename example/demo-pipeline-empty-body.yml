@@ -30,7 +30,6 @@ jobs:
               tag: git
           params:
             OUTPUT_SUBJECT_FILE_NAME: generated-subject
-            OUTPUT_BODY_FILE_NAME: generated-body
           run:
             path: sh
             args:
@@ -38,21 +37,8 @@ jobs:
             - |
               # ensure you esape the ${BUILD_ID} variable with leading \
               echo -e "Email resource demo on $(date): build \${BUILD_ID}" > email-out/${OUTPUT_SUBJECT_FILE_NAME}
-              echo -e "Cheers!\n\n \
-              Build ID: \${BUILD_ID} \n \
-              Build Name: \${BUILD_NAME} \n \
-              Build Job Name: \${BUILD_JOB_NAME} \n \
-              Build Pipeline Name: \${BUILD_PIPELINE_NAME} \n \
-              ATC External URL: \${ATC_EXTERNAL_URL}" > email-out/${OUTPUT_BODY_FILE_NAME}
           outputs:
           - name: email-out
       - put: send-an-email
         params:
           subject: email-out/generated-subject
-          body: email-out/generated-body
-      - put: send-an-email
-        params:
-          subject_text: "Build finished: ${BUILD_PIPELINE_NAME}/${BUILD_JOB_NAME}/${BUILD_NAME}"
-          body_text: |
-            "Using `subject_text` and `body_text`.
-            ${ATC_EXTERNAL_URL}/teams/main/pipelines/${BUILD_PIPELINE_NAME}/jobs/${BUILD_JOB_NAME}/builds/${BUILD_NAME}"

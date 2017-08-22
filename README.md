@@ -79,8 +79,10 @@ This is an output-only resource, so `check` and `in` actions are no-ops.
 #### Parameters
 
 * `headers`: *Optional.* Path to plain text file containing additional mail headers
-* `subject`: *Required.* Path to plain text file containing the subject
-* `body`: *Required.* Path to file containing the email body.
+* `subject`: *Optional.* Path to plain text file containing the subject. Either `subject` or `subject_text` required. `subject_text` takes precedence.
+* `subject_text`: *Optional.* The subject as text. Either `subject` or `subject_text` required. `subject_text` takes precedence.
+* `body`: *Optional.* Path to file containing the email body. Either `body` or `body_text` required. `body_text` takes precedence.
+* `body_text`: *Optional.* The email body as text. Either `body` or `body_text` required. `body_text` takes precedence.
 * `send_empty_body`: *Optional.* If true, send the email even if the body is empty (defaults to `false`).
 * `to`: *Optional.* Path to plain text file containing recipients which could be determined at build time. You can run a task before, which figures out the email of the person who committed last to a git repository (`git -C $source_path --no-pager show $(git -C $source_path rev-parse HEAD) -s --format='%ae' > output/email.txt`).  This file can contain `,` delimited list of email address if wanting to send to multiples.
 
@@ -101,7 +103,7 @@ For example, a build plan might contain this if using generated list of recipien
       to: generated-to-file
 ```
 
-You can use the values below in any of the source files to access the corresponding metadata made available by concourse, as documented [here](http://concourse.ci/implementing-resources.html)
+You can use the values below in any of the source files or text properties to access the corresponding metadata made available by concourse, as documented [here](http://concourse.ci/implementing-resources.html)
 
 * `${BUILD_ID}`
 * `${BUILD_NAME}`
@@ -110,7 +112,14 @@ You can use the values below in any of the source files to access the correspond
 * `${ATC_EXTERNAL_URL}`
 * `${BUILD_TEAM_NAME}`
 
-For example `generated-subject` could have content `Build ${BUILD_JOB_NAME} failed` which would result in the subject sent to be `Build job-name failed`
+For example:
+
+```yaml
+  - put: send-an-email
+    params:
+      subject_text: "Build finished: ${BUILD_PIPELINE_NAME}/${BUILD_JOB_NAME}/${BUILD_NAME}"
+      body_text: "Build finished: ${ATC_EXTERNAL_URL}/teams/main/pipelines/${BUILD_PIPELINE_NAME}/jobs/${BUILD_JOB_NAME}/builds/${BUILD_NAME}"
+```
 
 #### HTML Email
 
