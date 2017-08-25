@@ -10,8 +10,9 @@ type Input struct {
 			Port              string
 			Username          string
 			Password          string
-			Anonymous         bool `json:"anonymous"`
-			SkipSSLValidation bool `json:"skip_ssl_validation"`
+			Anonymous         bool   `json:"anonymous"`
+			SkipSSLValidation bool   `json:"skip_ssl_validation"`
+			CaCert            string `json:"ca_cert"`
 		}
 		From string
 		To   []string

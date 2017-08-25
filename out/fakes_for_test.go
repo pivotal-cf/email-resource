@@ -1,6 +1,7 @@
 package out_test
 
 import (
+	"crypto/tls"
 	"net"
 
 	"bitbucket.org/chrj/smtpd"
@@ -14,13 +15,28 @@ type FakeSMTPServer struct {
 	Port       string
 }
 
-func NewFakeSMTPServer() *FakeSMTPServer {
+func newFakeSMPTServer(tlsConfig *tls.Config) *FakeSMTPServer {
 	return &FakeSMTPServer{
 		server: &smtpd.Server{
-			Hostname: "127.0.0.1:0",
+			Hostname:  "127.0.0.1:0",
+			TLSConfig: tlsConfig,
 		},
 		Deliveries: make([]smtpd.Envelope, 0),
 	}
+}
+
+func NewFakeSMTPServer() *FakeSMTPServer {
+	return newFakeSMPTServer(nil)
+}
+
+func NewFakeSMTPServerWithCustomCert(crt string, key string) *FakeSMTPServer {
+	cert, err := tls.LoadX509KeyPair(crt, key)
+	if err != nil {
+		panic(err)
+	}
+	config := &tls.Config{Certificates: []tls.Certificate{cert}}
+
+	return newFakeSMPTServer(config)
 }
 
 func (s *FakeSMTPServer) Boot() {
