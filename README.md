@@ -12,7 +12,7 @@ resource_types:
       repository: pcfseceng/email-resource
 ```
 
-Look at the [demo pipeline](https://github.com/pivotal-cf/email-resource/blob/master/ci/demo-pipeline.yml) for a complete example.
+Look at the [demo pipeline](https://github.com/pivotal-cf/email-resource/blob/master/example/demo-pipeline.yml) for a complete example.
 
 This resource acts as an SMTP client, using `PLAIN` auth over TLS.  So you need an SMTP server that supports all that.
 
