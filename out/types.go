@@ -16,6 +16,7 @@ type Input struct {
 		}
 		From string
 		To   []string
+		Bcc  []string
 	}
 	Params struct {
 		Subject       string
@@ -26,6 +27,7 @@ type Input struct {
 		Headers       string
 		HeadersText   string `json:"headers_text"`
 		To            string `json:"to"`
+		Bcc           string `json:"bcc"`
 	}
 }
 
