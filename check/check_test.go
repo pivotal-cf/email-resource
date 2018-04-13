@@ -58,13 +58,13 @@ var _ = Describe("Check", func() {
 		server *server.Server
 		input  = `{
 	          "source": {
-	            "imap" : {
+	              "imap" : {
 	              "host": "localhost",
-                      "port": "9875",
-                      "username": "username",
-                      "password": "password",
+                  "port": "9875",
+                  "username": "username",
+                  "password": "password",
 	              "inbox": "INBOX",
-                      "skip_ssl_validation": true
+                  "skip_ssl_validation": true
 	            }
 	          }
 	        }`
@@ -91,6 +91,6 @@ var _ = Describe("Check", func() {
 		output := session.Out.Contents()
 
 		//memory backend implementation start at uid 6
-		Expect(string(output)).Should(MatchJSON(`[{ "uid": 6 },{ "uid": 7 }]`))
+		Expect(string(output)).Should(MatchJSON(`[{ "uid": "6" },{ "uid": "7" }]`))
 	})
 })

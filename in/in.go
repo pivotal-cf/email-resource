@@ -51,8 +51,13 @@ func Execute(input check.IMAP, version check.Version, destinationDir string) (st
 		return "", err
 	}
 
+	v, err := strconv.Atoi(version.ID)
+	if err != nil {
+		return "", err
+	}
+
 	seqset := new(imap.SeqSet)
-	seqset.AddNum(version.ID)
+	seqset.AddNum(uint32(v))
 	var msg *imap.Message
 
 	messages, done := fetchMessages(imapClient, seqset)

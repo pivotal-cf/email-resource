@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
+	"strconv"
 )
 
 type IMAP struct {
@@ -18,7 +19,7 @@ type IMAP struct {
 }
 
 type Version struct {
-	ID uint32 `json:"uid"`
+	ID string `json:"uid"`
 }
 
 //Execute - provides check capability
@@ -92,7 +93,7 @@ func retrieveVersions(messages chan *imap.Message, done chan error) ([]Version, 
 			}
 
 			results = append(results, Version{
-				ID: msg.Uid,
+				ID: strconv.Itoa(int(msg.Uid)),
 			})
 		case err := <-done:
 			if err != nil {
