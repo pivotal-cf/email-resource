@@ -1,6 +1,37 @@
-hash: 0eed8841e6bbbef4649c518008c811412de98edd0afded7fa80427dcaab3cf74
-updated: 2017-08-18T14:26:07.750688901-07:00
-imports: []
+hash: 50e2bf5b60bb3a65a978a47948f06069a0d7b52e3a0a11f5a80252ccc282f1f3
+updated: 2018-04-12T22:38:57.992096-04:00
+imports:
+- name: github.com/emersion/go-imap
+  version: b63c7c7011cba491f40dcc43026cc30e2fbdf337
+  subpackages:
+  - backend
+  - backend/backendutil
+  - backend/memory
+  - client
+  - commands
+  - responses
+  - server
+  - utf7
+- name: github.com/emersion/go-message
+  version: 51445bfdc558d43bf3582f85b13e30210f469d35
+  subpackages:
+  - charset
+  - mail
+- name: github.com/emersion/go-sasl
+  version: 7e096a0a6197b89989e8cc31016daa67c8c62051
+- name: github.com/emersion/go-textwrapper
+  version: d0e65e56babe3f687ff94c1d764ca0e6aa7723ee
+- name: golang.org/x/text
+  version: 7922cc490dd5a7dbaa7fd5d6196b49db59ac042f
+  subpackages:
+  - encoding
+  - encoding/charmap
+  - encoding/internal
+  - encoding/internal/identifier
+  - encoding/japanese
+  - encoding/simplifiedchinese
+  - encoding/traditionalchinese
+  - transform
 testImports:
 - name: bitbucket.org/chrj/smtpd
   version: 9ddcdbda0f7aebfb78b38b5688a50764d72ef78d
