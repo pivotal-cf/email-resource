@@ -4,9 +4,10 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"strconv"
+
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
-	"strconv"
 )
 
 type IMAP struct {
@@ -19,7 +20,7 @@ type IMAP struct {
 }
 
 type Version struct {
-	ID string `json:"uid"`
+	ID   string `json:"uid"`
 }
 
 //Execute - provides check capability
@@ -60,16 +61,20 @@ func Execute(input IMAP) (string, error) {
 }
 
 func generateSeqset(mbox *imap.MailboxStatus) *imap.SeqSet {
-	// Get the last 4 messages
-	from := uint32(1)
-	to := mbox.Messages
-	numberOfMessagesToReadFrom := uint32(3)
+	var (
+		numberOfMessagesToReadFrom = uint32(5)
+		from                       = mbox.Messages
+		to                         uint32
+	)
+
 	if mbox.Messages > numberOfMessagesToReadFrom {
-		// We're using unsigned integers here, only subtract if the result is > 0
-		from = mbox.Messages - numberOfMessagesToReadFrom
+		to = mbox.Messages - numberOfMessagesToReadFrom
+	} else {
+		to = mbox.Messages - uint32(1)
 	}
+
 	seqset := new(imap.SeqSet)
-	seqset.AddRange(from, to)
+	seqset.AddRange(to, from)
 	return seqset
 }
 
@@ -77,7 +82,7 @@ func fetchMessages(imapClient *client.Client, seqset *imap.SeqSet) (chan *imap.M
 	messages := make(chan *imap.Message, 10)
 	done := make(chan error, 1)
 	go func() {
-		done <- imapClient.Fetch(seqset, []imap.FetchItem{imap.FetchUid, imap.FetchEnvelope}, messages)
+		done <- imapClient.Fetch(seqset, []imap.FetchItem{imap.FetchUid}, messages)
 	}()
 	return messages, done
 }
@@ -93,7 +98,7 @@ func retrieveVersions(messages chan *imap.Message, done chan error) ([]Version, 
 			}
 
 			results = append(results, Version{
-				ID: strconv.Itoa(int(msg.Uid)),
+				ID:   strconv.Itoa(int(msg.Uid)),
 			})
 		case err := <-done:
 			if err != nil {
