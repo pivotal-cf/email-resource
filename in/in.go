@@ -58,20 +58,16 @@ func Execute(input check.IMAP, version check.Version, destinationDir string) (st
 
 	seqset := new(imap.SeqSet)
 	seqset.AddNum(uint32(v))
-	var msg *imap.Message
 
 	messages, done := fetchMessages(imapClient, seqset)
-	select {
-	case msg = <-messages:
-		if msg == nil {
-			return "", errors.New("server didn't return message")
-		}
-	case err := <-done:
-		if err != nil {
-			return "", err
-		}
+	msg := <-messages
+	if msg == nil {
+		return "", errors.New("server didn't return message")
 	}
 
+	if err := <-done; err != nil {
+		return "", err
+	}
 
 	section := &imap.BodySectionName{}
 	messageBodyReader := msg.GetBody(section)

@@ -90,22 +90,11 @@ func fetchMessages(imapClient *client.Client, seqset *imap.SeqSet) (chan *imap.M
 func retrieveVersions(messages chan *imap.Message, done chan error) ([]Version, error) {
 	var results []Version
 
-	for {
-		select {
-		case msg := <-messages:
-			if msg == nil {
-				continue
-			}
-
-			results = append(results, Version{
-				ID:   strconv.Itoa(int(msg.Uid)),
-			})
-		case err := <-done:
-			if err != nil {
-				return nil, err
-			}
-
-			return results, nil
-		}
+	for msg := range messages {
+		results = append(results, Version{
+			ID:   strconv.Itoa(int(msg.Uid)),
+		})
 	}
+
+	return results, <-done
 }
