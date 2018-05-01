@@ -116,6 +116,10 @@ The provided `inbox` is scanned and the last 4 emails found will be returned.
 
 Downloads the targetted email onto the file system. The email information is seperated into `subject`, `body`, `version`, `date` files and an `attachments` folder.
 
+#### Parameters
+
+* `attachment_filter`: *Optional.* If provided, only retrieves attachments with names that match the provided regular expression.
+
 ### `out`: Send an email
 
 #### Parameters

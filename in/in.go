@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"time"
 )
@@ -26,8 +27,12 @@ type Attachment struct {
 	Contents []byte
 }
 
+type Params struct {
+	AttachmentFilter string `json:"attachment_filter"`
+}
+
 //Execute - provides in capability
-func Execute(input check.IMAP, version check.Version, destinationDir string) (string, error) {
+func Execute(input check.IMAP, version check.Version, params Params, destinationDir string) (string, error) {
 	err := os.MkdirAll(destinationDir, os.ModePerm)
 	if err != nil {
 		return "", err
@@ -96,11 +101,16 @@ func Execute(input check.IMAP, version check.Version, destinationDir string) (st
 			body, _ = ioutil.ReadAll(part.Body)
 		case mail.AttachmentHeader:
 			filename, _ := header.Filename()
-			contents, _ := ioutil.ReadAll(part.Body)
-			attachments = append(attachments, Attachment{
-				Name:     filename,
-				Contents: contents,
-			})
+			match, _ := regexp.MatchString(params.AttachmentFilter, filename)
+
+			if match {
+				contents, _ := ioutil.ReadAll(part.Body)
+
+				attachments = append(attachments, Attachment{
+					Name:     filename,
+					Contents: contents,
+				})
+			}
 		}
 	}
 

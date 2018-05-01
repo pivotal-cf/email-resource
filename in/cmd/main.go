@@ -22,6 +22,7 @@ func main() {
 			check.IMAP `json:"imap"`
 		} `json:"source"`
 		Version check.Version `json:"version"`
+		Params  in.Params     `json:"params"`
 	}
 
 	err := json.NewDecoder(os.Stdin).Decode(&input)
@@ -29,7 +30,7 @@ func main() {
 		panic(err)
 	}
 
-	output, err := in.Execute(input.Source.IMAP, input.Version, destinationDir)
+	output, err := in.Execute(input.Source.IMAP, input.Version, input.Params, destinationDir)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)

@@ -50,6 +50,12 @@ Content-Type: text/plain
 
 some-attachment-data
 
+--message-boundary
+Content-Disposition: attachment; filename=attachment.diff
+Content-Type: text/plain
+
+some-attachment-data-diff
+
 --message-boundary--
 
 `
@@ -134,7 +140,7 @@ var _ = Describe("In", func() {
                     },
                     {
                       "name": "Number of Attachments",
-                      "value": "1"
+                      "value": "2"
                     }
                   ]
         	}`))
@@ -159,5 +165,44 @@ var _ = Describe("In", func() {
 
 		attachmentPath := filepath.Join(destinationDir, "attachments", "attachment.txt")
 		Expect(contentsAt(attachmentPath)).To(Equal("some-attachment-data"))
+
+		attachmentPath = filepath.Join(destinationDir, "attachments", "attachment.diff")
+		Expect(contentsAt(attachmentPath)).To(Equal("some-attachment-data-diff"))
+	})
+
+	Context("when 'params.attachement_filter' is specified", func() {
+		BeforeEach(func() {
+			input = `{
+				"source": {
+					"imap" : {
+						"host": "localhost",
+						"port": "9875",
+						"username": "username",
+						"password": "password",
+						"inbox": "INBOX",
+						"skip_ssl_validation": true
+					}
+				},
+				"version": { "uid": "7" },
+				"params": {
+					"attachment_filter" : "\\.txt$"
+				}
+			}`
+		})
+
+		It("only writes attachements that match the regex provided", func() {
+			command := exec.Command(binaryPath, destinationDir)
+			command.Stdin = strings.NewReader(input)
+
+			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(session, "10s").Should(gexec.Exit(0))
+
+			attachmentPath := filepath.Join(destinationDir, "attachments", "attachment.txt")
+			Expect(contentsAt(attachmentPath)).To(Equal("some-attachment-data"))
+
+			attachmentPath = filepath.Join(destinationDir, "attachments", "attachment.diff")
+			Expect(attachmentPath).NotTo(BeAnExistingFile())
+		})
 	})
 })
