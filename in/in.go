@@ -15,6 +15,8 @@ import (
 	"regexp"
 	"strconv"
 	"time"
+	"github.com/PuerkitoBio/goquery"
+	"strings"
 )
 
 type MetadataItem struct {
@@ -107,7 +109,8 @@ func Execute(input check.IMAP, version check.Version, params Params, destination
 
 		switch header := part.Header.(type) {
 		case mail.TextHeader:
-			body, _ = ioutil.ReadAll(part.Body)
+			contentType, _, _ := header.ContentType()
+			body = getEmailContent(part.Body, contentType)
 		case mail.AttachmentHeader:
 			filename, _ := header.Filename()
 			match, _ := regexp.MatchString(params.AttachmentFilter, filename)
@@ -144,6 +147,7 @@ func Execute(input check.IMAP, version check.Version, params Params, destination
 	data.Metadata = append(data.Metadata,
 		MetadataItem{Name: "Subject", Value: msg.Envelope.Subject},
 		MetadataItem{Name: "From", Value: author},
+		MetadataItem{Name: "Body", Value: strings.TrimSpace(truncateString(string(body), 150))},
 		MetadataItem{Name: "Date", Value: msg.Envelope.Date.Format(time.RFC850)},
 		MetadataItem{Name: "Number of Attachments", Value: strconv.Itoa(len(attachments))},
 	)
@@ -154,6 +158,27 @@ func Execute(input check.IMAP, version check.Version, params Params, destination
 	}
 
 	return string(bytes), nil
+}
+
+func truncateString(str string, num int) string {
+	s := str
+	if len(str) > num {
+		if num > 3 {
+			num -= 3
+		}
+		s = str[0:num] + "..."
+	}
+	return s
+}
+
+func getEmailContent(body io.Reader, contentType string) []byte {
+	if contentType == "text/plain" {
+		contents, _ := ioutil.ReadAll(body)
+		return contents
+	}
+
+	doc, _ := goquery.NewDocumentFromReader(body)
+	return []byte(doc.Text())
 }
 
 func fetchMessages(imapClient *client.Client, seqset *imap.SeqSet) (chan *imap.Message, chan error) {

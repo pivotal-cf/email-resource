@@ -40,9 +40,9 @@ To: to@example.org
 	textBody := `
 --message-boundary
 Content-Disposition: inline
-Content-Type: text/plain
+Content-Type: text/html
 
-Hi there :)
+<div>Hi there :)</div>
 
 --message-boundary
 Content-Disposition: attachment; filename=attachment.txt
@@ -137,6 +137,10 @@ var _ = Describe("In", func() {
                     {
                       "name": "From",
                       "value": "from@example.org"
+                    },
+                    {
+                      "name": "Body",
+                      "value": "Hi there :)"
                     },
                     {
                       "name": "Date",
