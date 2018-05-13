@@ -2,6 +2,10 @@ package: github.com/pivotal-cf/email-resource
 import:
 - package: github.com/emersion/go-imap
   version: ^1.0.0-beta.1
+- package: github.com/PuerkitoBio/goquery
+  version: ^1.4.0
+- package: github.com/andybalholm/cascadia
+  version: ^1.0.0
 testImport:
 - package: github.com/onsi/ginkgo
   version: 25380c62e61d3f90436be125b8127dbae578fdef
