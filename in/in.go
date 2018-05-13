@@ -38,7 +38,7 @@ func Execute(input check.IMAP, version check.Version, params Params, destination
 		return "", err
 	}
 
-	imapClient, err := client.DialTLS(input.Host+":"+input.Port, &tls.Config{
+	imapClient, err := client.DialTLS(input.Host + ":" + input.Port, &tls.Config{
 		InsecureSkipVerify: input.SkipSSLValidation,
 	})
 	if err != nil {
@@ -85,6 +85,15 @@ func Execute(input check.IMAP, version check.Version, params Params, destination
 		return "", err
 	}
 
+	var author string
+	if from := msg.Envelope.From; len(from) > 0 {
+		if personalName := from[0].PersonalName; personalName != "" {
+			author = personalName
+		} else {
+			author = from[0].MailboxName + "@" + from[0].HostName
+		}
+	}
+
 	var body []byte
 	var attachments []Attachment
 
@@ -116,6 +125,7 @@ func Execute(input check.IMAP, version check.Version, params Params, destination
 
 	ioutil.WriteFile(filepath.Join(destinationDir, "version"), []byte(msg.Envelope.MessageId), 0600)
 	ioutil.WriteFile(filepath.Join(destinationDir, "subject"), []byte(msg.Envelope.Subject), 0600)
+	ioutil.WriteFile(filepath.Join(destinationDir, "from"), []byte(author), 0600)
 	ioutil.WriteFile(filepath.Join(destinationDir, "date"), []byte(msg.Envelope.Date.Format(time.RFC850)), 0600)
 	ioutil.WriteFile(filepath.Join(destinationDir, "body"), body, 0600)
 
@@ -133,6 +143,7 @@ func Execute(input check.IMAP, version check.Version, params Params, destination
 	data.Version = version
 	data.Metadata = append(data.Metadata,
 		MetadataItem{Name: "Subject", Value: msg.Envelope.Subject},
+		MetadataItem{Name: "From", Value: author},
 		MetadataItem{Name: "Date", Value: msg.Envelope.Date.Format(time.RFC850)},
 		MetadataItem{Name: "Number of Attachments", Value: strconv.Itoa(len(attachments))},
 	)

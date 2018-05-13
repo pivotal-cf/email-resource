@@ -32,10 +32,10 @@ func startServer() (*server.Server, error) {
 
 	header := `Content-Type: multipart/mixed; boundary=message-boundary
 Date: Wed, 11 May 2016 14:31:59 +0000
-From: contact@example.org
+From: from@example.org
 Message-Id: 42@example.org
 Subject: A little message, just for you
-To: contact@example.org
+To: to@example.org
 `
 	textBody := `
 --message-boundary
@@ -88,15 +88,15 @@ var _ = Describe("In", func() {
 		server         *server.Server
 		input          = `{
 	          "source": {
-	             "imap" : {
-	             "host": "localhost",
-                 "port": "9875",
-                 "username": "username",
-                 "password": "password",
-	             "inbox": "INBOX",
-                 "skip_ssl_validation": true
+	            "imap" : {
+	              "host": "localhost",
+                      "port": "9875",
+                      "username": "username",
+                      "password": "password",
+	              "inbox": "INBOX",
+                      "skip_ssl_validation": true
 	            }
-	          },
+	           },
           	  "version": { "uid": "7" }
 	        }`
 	)
@@ -135,6 +135,10 @@ var _ = Describe("In", func() {
                       "value": "A little message, just for you"
                     },
                     {
+                      "name": "From",
+                      "value": "from@example.org"
+                    },
+                    {
                       "name": "Date",
                       "value": "Wednesday, 11-May-16 14:31:59 +0000"
                     },
@@ -156,10 +160,16 @@ var _ = Describe("In", func() {
 
 		subjectPath := filepath.Join(destinationDir, "subject")
 		Expect(contentsAt(subjectPath)).To(Equal("A little message, just for you"))
+
+		fromPath := filepath.Join(destinationDir, "from")
+		Expect(contentsAt(fromPath)).To(Equal("from@example.org"))
+
 		versionPath := filepath.Join(destinationDir, "version")
 		Expect(contentsAt(versionPath)).To(Equal("42@example.org"))
+
 		datePath := filepath.Join(destinationDir, "date")
 		Expect(contentsAt(datePath)).To(Equal("Wednesday, 11-May-16 14:31:59 +0000"))
+
 		bodyPath := filepath.Join(destinationDir, "body")
 		Expect(contentsAt(bodyPath)).To(Equal("Hi there :)"))
 
