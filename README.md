@@ -14,7 +14,9 @@ resource_types:
 
 Look at the [demo pipeline](https://github.com/pivotal-cf/email-resource/blob/master/example/demo-pipeline.yml) for a complete example.
 
-This resource acts as an SMTP client, using `PLAIN` auth over TLS.  So you need an SMTP server that supports all that.
+This resource allows retrieval of emails via the IMAP protocol. Only TLS emails servers are supported.
+
+This resource also acts as an SMTP client, using `PLAIN` auth over TLS.  So you need an SMTP server that supports all that.
 
 For development, we've been using [Amazon SES](https://aws.amazon.com/ses/) with its [SMTP support](http://docs.aws.amazon.com/ses/latest/DeveloperGuide/smtp-credentials.html)
 
@@ -23,6 +25,15 @@ For development, we've been using [Amazon SES](https://aws.amazon.com/ses/) with
 ### `source`:
 
 #### Parameters
+
+Within imap:
+
+* `host`: *Required.* SMTP Host name
+* `port`: *Required.* SMTP Port, must be entered as a string
+* `username`: *Required.* Username to authenticate with
+* `password`: *Required.* Password to authenticate with
+* `inbox`: *Required.* Message inbox to watch for updates
+* `skip_ssl_validation`: *Optional.* Whether or not to skip ssl validation.  true/false are valid options.  If omitted default is false.
 
 Within smtp:
 
@@ -44,6 +55,12 @@ resources:
 - name: send-an-email
   type: email
   source:
+    imap:
+      host: imap.example.com
+      port: "587" # this must be a string
+      username: a-user
+      password: my-password
+      inbox: "INBOX"
     smtp:
       host: smtp.example.com
       port: "587" # this must be a string
@@ -91,7 +108,17 @@ But for literals you need to surround it with quotes.
 
 ## Behavior
 
-This is an output-only resource, so `check` and `in` actions are no-ops.
+### `check`: Check for new emails
+
+The provided `inbox` is scanned and the last 4 emails found will be returned.
+
+### `in`: Pull in a specific email
+
+Downloads the targetted email onto the file system. The email information is seperated into `subject`, `body`, `version`, `date` files and an `attachments` folder.
+
+#### Parameters
+
+* `attachment_filter`: *Optional.* If provided, only retrieves attachments with names that match the provided regular expression.
 
 ### `out`: Send an email
 
