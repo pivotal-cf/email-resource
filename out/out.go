@@ -129,6 +129,20 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 		}
 	}
 
+	if indata.Params.Bcc != "" {
+		var bccList string
+		bccList, err = readSource(indata.Params.Bcc)
+		if err != nil {
+			return "", err
+		}
+		if len(bccList) > 0 {
+			bccListArray := strings.Split(bccList, ",")
+			for _, bccAddress := range bccListArray {
+				indata.Source.Bcc = append(indata.Source.Bcc, strings.TrimSpace(bccAddress))
+			}
+		}
+	}
+
 	var outdata Output
 	outdata.Version.Time = time.Now().UTC()
 	outdata.Metadata = []MetadataItem{
@@ -194,6 +208,11 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 		return "", err
 	}
 	for _, addr := range indata.Source.To {
+		if err = c.Rcpt(addr); err != nil {
+			return "", err
+		}
+	}
+	for _, addr := range indata.Source.Bcc {
 		if err = c.Rcpt(addr); err != nil {
 			return "", err
 		}
