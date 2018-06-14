@@ -6,6 +6,16 @@ resource_types:
       tag: {{docker-tag}}
 
 resources:
+  - name: receive-an-email
+    type: email
+    source:
+      imap:
+        host: {{smtp-host}}
+        port: {{smtp-port}}
+        username: {{smtp-username}}
+        password: {{smtp-password}}
+        inbox: "INBOX"
+
   - name: send-an-email
     type: email
     source:
@@ -18,6 +28,31 @@ resources:
       to: [ {{email-to}} ]
 
 jobs:
+  - name: receive-email
+    plan:
+      - get: receive-an-email
+        trigger: true
+      - task: read-email
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: concourse/buildroot
+              tag: git
+          inputs:
+          - recieve-an-email
+          run:
+            path: sh
+            args:
+            - -exc
+            - |
+              cat recieve-an-email/subject
+              cat recieve-an-email/body
+              cat recieve-an-email/date
+              cat recieve-an-email/version
+              ls -l recieve-an-email/attachments
+
   - name: send-email
     plan:
       - task: prep-email

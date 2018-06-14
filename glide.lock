@@ -1,6 +1,46 @@
-hash: 0eed8841e6bbbef4649c518008c811412de98edd0afded7fa80427dcaab3cf74
-updated: 2017-08-18T14:26:07.750688901-07:00
-imports: []
+hash: 84c43c7396b6a263043a025d96748e10abaee0062bdd72379640c0d0980826c4
+updated: 2018-05-13T12:48:11.039314-04:00
+imports:
+- name: github.com/andybalholm/cascadia
+  version: 901648c87902174f774fac311d7f176f8647bdaa
+- name: github.com/emersion/go-imap
+  version: b63c7c7011cba491f40dcc43026cc30e2fbdf337
+  subpackages:
+  - backend
+  - backend/backendutil
+  - backend/memory
+  - client
+  - commands
+  - responses
+  - server
+  - utf7
+- name: github.com/emersion/go-message
+  version: 51445bfdc558d43bf3582f85b13e30210f469d35
+  subpackages:
+  - charset
+  - mail
+- name: github.com/emersion/go-sasl
+  version: 7e096a0a6197b89989e8cc31016daa67c8c62051
+- name: github.com/emersion/go-textwrapper
+  version: d0e65e56babe3f687ff94c1d764ca0e6aa7723ee
+- name: github.com/PuerkitoBio/goquery
+  version: a86ea073017a6beddef78c8659e7224e8ca634b0
+- name: golang.org/x/net
+  version: 2491c5de3490fced2f6cff376127c667efeed857
+  subpackages:
+  - html
+  - html/atom
+- name: golang.org/x/text
+  version: 7922cc490dd5a7dbaa7fd5d6196b49db59ac042f
+  subpackages:
+  - encoding
+  - encoding/charmap
+  - encoding/internal
+  - encoding/internal/identifier
+  - encoding/japanese
+  - encoding/simplifiedchinese
+  - encoding/traditionalchinese
+  - transform
 testImports:
 - name: bitbucket.org/chrj/smtpd
   version: 9ddcdbda0f7aebfb78b38b5688a50764d72ef78d
