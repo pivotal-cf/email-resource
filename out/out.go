@@ -182,7 +182,7 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 	defer c.Close()
 
 	if err = c.Hello(indata.Source.SMTP.Host); err != nil {
-		logger.Print(fmt.Sprintf("unable to connect with host %s", indata.Source.SMTP.Host))
+		logger.Println(fmt.Sprintf("unable to connect with host %s", indata.Source.SMTP.Host))
 		if err = c.Hello("localhost"); err != nil {
 			return "", errors.Wrap(err, "unable to connect with hello to localhost")
 		}
