@@ -2,7 +2,6 @@ package out_test
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -93,7 +92,7 @@ even empty lines
 				output, err := out.Execute(sourceRoot, "the-version", []byte(inputdata))
 
 				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(BeEquivalentTo(`x509: certificate signed by unknown authority`))
+				Expect(err.Error()).To(BeEquivalentTo(`unable to start TLS: x509: certificate signed by unknown authority`))
 				Expect(output).Should(BeEmpty())
 			}
 
@@ -516,7 +515,7 @@ Header-3: value-3
 			inputdata = string(inputBytes)
 			output, err := out.Execute(sourceRoot, "", []byte(inputdata))
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal(fmt.Sprintf("dial tcp %s:%s: getsockopt: connection refused", inputs.Source.SMTP.Host, inputs.Source.SMTP.Port)))
+			Expect(err.Error()).To(ContainSubstring("connection refused"))
 			Expect(output).Should(BeEmpty())
 		})
 	})

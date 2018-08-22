@@ -4,19 +4,23 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/smtp"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 //Execute - provides out capability
 func Execute(sourceRoot, version string, input []byte) (string, error) {
+
+	logger := log.New(os.Stderr, "", log.LstdFlags)
 	var buildTokens = map[string]string{
 		"${BUILD_ID}":            os.Getenv("BUILD_ID"),
 		"${BUILD_NAME}":          os.Getenv("BUILD_NAME"),
@@ -104,8 +108,7 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 	if indata.Params.Headers != "" {
 		headers, err = readSource(indata.Params.Headers)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, err.Error())
-			os.Exit(1)
+			return "", errors.Wrap(err, "unable to read source file for headers")
 		}
 		headers = strings.Trim(headers, "\n")
 	}
@@ -156,7 +159,7 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 	}
 
 	if indata.Params.SendEmptyBody == false && len(body) == 0 {
-		fmt.Fprintf(os.Stderr, "Message not sent because the message body is empty and send_empty_body parameter was set to false. Github readme: https://github.com/pivotal-cf/email-resource")
+		logger.Println("Message not sent because the message body is empty and send_empty_body parameter was set to false. Github readme: https://github.com/pivotal-cf/email-resource")
 		return string(outbytes), nil
 	}
 	var messageData []byte
@@ -178,14 +181,17 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 	}
 	defer c.Close()
 
-	if err = c.Hello("localhost"); err != nil {
-		return "", err
+	if err = c.Hello(indata.Source.SMTP.Host); err != nil {
+		logger.Print(fmt.Sprintf("unable to connect with host %s", indata.Source.SMTP.Host))
+		if err = c.Hello("localhost"); err != nil {
+			return "", errors.Wrap(err, "unable to connect with hello to localhost")
+		}
 	}
 	if ok, _ := c.Extension("STARTTLS"); ok {
 		config := tlsConfig(indata)
 
 		if err = c.StartTLS(config); err != nil {
-			return "", err
+			return "", errors.Wrap(err, "unable to start TLS")
 		}
 	}
 
@@ -199,7 +205,7 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 		if auth != nil {
 			if ok, _ := c.Extension("AUTH"); ok {
 				if err = c.Auth(auth); err != nil {
-					return "", err
+					return "", errors.Wrap(err, "unable to auth")
 				}
 			}
 		}
