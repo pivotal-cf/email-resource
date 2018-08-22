@@ -33,6 +33,7 @@ Within smtp:
 * `password`: *Required, Conditionally.* Password to authenticate with.  Ignored if `anonymous: true`
 * `skip_ssl_validation`: *Optional.* Whether or not to skip ssl validation.  true/false are valid options.  If omitted default is false
 * `ca_cert`: *Optional.* Certificates content to verify servers with custom certificates. Only considered if `skip_ssl_validation` is `false`.
+* `host_origin`: *Optional.* Host to send `Hello` from.  If not provided `localhost` is used
 
 Within source:
 * `from`: *Required.* Email Address to be sent from.
@@ -82,7 +83,7 @@ resources:
         ...
         -----END CERTIFICATE-----
     from: build-system@example.com
-    to: [ "dev-team@example.com", "product@example.net" ] 
+    to: [ "dev-team@example.com", "product@example.net" ]
 ```
 Note that `to` is an array, and that `port` is a string.
 If you're using `fly configure` with the `--load-vars-from` (`-l`) substitutions, every `{{ variable }}`

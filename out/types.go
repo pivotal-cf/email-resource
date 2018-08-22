@@ -13,6 +13,7 @@ type Input struct {
 			Anonymous         bool   `json:"anonymous"`
 			SkipSSLValidation bool   `json:"skip_ssl_validation"`
 			CaCert            string `json:"ca_cert"`
+			HostOrigin        string `json:"host_origin"`
 		}
 		From string
 		To   []string

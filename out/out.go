@@ -181,11 +181,13 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 	}
 	defer c.Close()
 
-	if err = c.Hello(indata.Source.SMTP.Host); err != nil {
-		logger.Println(fmt.Sprintf("unable to connect with host %s", indata.Source.SMTP.Host))
-		if err = c.Hello("localhost"); err != nil {
-			return "", errors.Wrap(err, "unable to connect with hello to localhost")
-		}
+	hostOrigin := "localhost"
+
+	if indata.Source.SMTP.HostOrigin != "" {
+		hostOrigin = indata.Source.SMTP.HostOrigin
+	}
+	if err = c.Hello(hostOrigin); err != nil {
+		return "", errors.Wrap(err, fmt.Sprintf("unable to connect with hello with host name %s, try setting property host_origin", hostOrigin))
 	}
 	if ok, _ := c.Extension("STARTTLS"); ok {
 		config := tlsConfig(indata)
