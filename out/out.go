@@ -198,7 +198,7 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 	}
 
 	if !indata.Source.SMTP.Anonymous {
-		auth := smtp.PlainAuth(
+		auth := LoginAuth(
 			"",
 			indata.Source.SMTP.Username,
 			indata.Source.SMTP.Password,
