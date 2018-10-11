@@ -204,7 +204,7 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 		if auth != nil {
 			if ok, _ := c.Extension("AUTH"); ok {
 				if err = c.Auth(auth); err != nil {
-					return "", errors.Wrap(err, "unable to auth")
+					return "", errors.Wrap(err, "unable to auth using type Login Auth")
 				}
 			}
 		}
@@ -218,7 +218,7 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 		if auth != nil {
 			if ok, _ := c.Extension("AUTH"); ok {
 				if err = c.Auth(auth); err != nil {
-					return "", errors.Wrap(err, "unable to auth")
+					return "", errors.Wrap(err, "unable to auth using type Plain Auth")
 				}
 			}
 		}
