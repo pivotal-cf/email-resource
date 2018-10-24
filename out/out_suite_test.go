@@ -10,4 +10,5 @@ import (
 func TestOut(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Out Suite")
+	TestEmail_SendSuccessful(t)
 }
