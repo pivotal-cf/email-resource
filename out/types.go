@@ -14,6 +14,7 @@ type Input struct {
 			SkipSSLValidation bool   `json:"skip_ssl_validation"`
 			CaCert            string `json:"ca_cert"`
 			HostOrigin        string `json:"host_origin"`
+			LoginAuth         bool   `json:"login_auth"`
 		}
 		From string
 		To   []string
