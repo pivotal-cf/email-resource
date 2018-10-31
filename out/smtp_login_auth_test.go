@@ -20,17 +20,19 @@ type EmailSender interface {
 }
 
 func NewEmailSender(conf EmailConfig) EmailSender {
-	return &emailSender{conf, smtp.SendMail}
+	return &emailSender{conf: conf, send: smtp.SendMail}
 }
 
 type emailSender struct {
 	conf EmailConfig
+	auth smtp.Auth
 	send func(string, smtp.Auth, string, []string, []byte) error
 }
 
 func (e *emailSender) Send(to []string, body []byte) error {
 	addr := e.conf.ServerHost + ":" + e.conf.ServerPort
 	auth := out.LoginAuth(e.conf.Username, e.conf.Password)
+	e.auth = auth
 	return e.send(addr, auth, e.conf.SenderAddr, to, body)
 }
 
@@ -64,4 +66,45 @@ type emailRecorder struct {
 	from string
 	to   []string
 	msg  []byte
+}
+
+func TestStart(t *testing.T) {
+	username := "test-user"
+	password := "test-pass"
+	auth := out.LoginAuth(username, password)
+
+	authType, resp, err := auth.Start(nil)
+
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+	if authType != "LOGIN" {
+		t.Errorf("expected authType to be LOGIN, but was %s", authType)
+	}
+	if string(resp) != "" {
+		t.Errorf("wrong message body.\n\nexpected: %s\n got: %s", "", string(resp))
+	}
+}
+
+func TestNext(t *testing.T) {
+	username := "test-user"
+	password := "test-pass"
+
+	auth := out.LoginAuth(username, password)
+
+	resp, err := auth.Next([]byte("Username:"), true)
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+	if string(resp) != username {
+		t.Errorf("expected username response to be %s, got %s", username, string(resp))
+	}
+
+	resp, err = auth.Next([]byte("Password:"), true)
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+	if string(resp) != password {
+		t.Errorf("expected password response to be %s, got %s", password, string(resp))
+	}
 }
