@@ -204,7 +204,7 @@ even empty lines
 
 				output, err := out.Execute(sourceRoot, "", inputBytes)
 				Expect(err).Should(HaveOccurred())
-				Expect(err.Error()).Should(BeEquivalentTo(`missing required field "params.subject" or "params.subject_text". Must specify at least one`))
+				Expect(err.Error()).Should(BeEquivalentTo(`Invalid configuration: missing required field "params.subject" or "params.subject_text". Must specify at least one`))
 				Expect(output).To(BeEmpty())
 				Expect(smtpServer.Deliveries).To(HaveLen(0))
 			})
@@ -403,7 +403,7 @@ Header-3: value-3
 
 			output, err := out.Execute(sourceRoot, "", inputBytes)
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(BeEquivalentTo(`missing required field "source.from"`))
+			Expect(err.Error()).To(BeEquivalentTo(`Invalid configuration: missing required field "source.from"`))
 			Expect(output).Should(BeEmpty())
 		})
 	})
@@ -418,7 +418,7 @@ Header-3: value-3
 
 				output, err := out.Execute(sourceRoot, "", inputBytes)
 				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(BeEquivalentTo(`missing required field "source.to" or "params.to". Must specify at least one`))
+				Expect(err.Error()).To(BeEquivalentTo(`Invalid configuration: missing required field "source.to" or "params.to". Must specify at least one`))
 				Expect(output).Should(BeEmpty())
 			})
 		})
@@ -445,7 +445,7 @@ Header-3: value-3
 			Expect(err).NotTo(HaveOccurred())
 
 			output, err := out.Execute(sourceRoot, "", inputBytes)
-			Expect(err.Error()).To(BeEquivalentTo(`missing required field "source.smtp.username" if anonymous specify anonymous: true`))
+			Expect(err.Error()).To(BeEquivalentTo(`Invalid configuration: missing required field "source.smtp.username" if anonymous specify anonymous: true`))
 			Expect(output).Should(BeEmpty())
 		})
 	})
@@ -471,7 +471,7 @@ Header-3: value-3
 
 			output, err := out.Execute(sourceRoot, "", inputBytes)
 			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(BeEquivalentTo(`missing required field "source.smtp.password" if anonymous specify anonymous: true`))
+			Expect(err.Error()).To(BeEquivalentTo(`Invalid configuration: missing required field "source.smtp.password" if anonymous specify anonymous: true`))
 			Expect(output).Should(BeEmpty())
 		})
 	})

@@ -35,7 +35,7 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 
 	err = validateConfiguration(indata)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "Invalid configuration")
 	}
 
 	source := indata.Source
@@ -44,7 +44,7 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 
 	subject, err := fromTextOrFile(sourceRoot, params.SubjectText, params.Subject)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "Error getting Subject:")
 	}
 	subject = strings.Trim(subject, "\n")
 
@@ -59,14 +59,14 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 
 	body, err := fromTextOrFile(sourceRoot, params.BodyText, params.Body)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "Error getting Body:")
 	}
 
 	if params.To != "" {
 		var toList string
 		toList, err = readSource(sourceRoot, params.To)
 		if err != nil {
-			return "", err
+			return "", errors.Wrap(err, "Error getting To:")
 		}
 		if len(toList) > 0 {
 			toListArray := strings.Split(toList, ",")
@@ -80,7 +80,7 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 		var bccList string
 		bccList, err = readSource(sourceRoot, params.Bcc)
 		if err != nil {
-			return "", err
+			return "", errors.Wrap(err, "Error getting BCC:")
 		}
 		if len(bccList) > 0 {
 			bccListArray := strings.Split(bccList, ",")
@@ -99,7 +99,7 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 	}
 	outbytes, err := json.Marshal(outdata)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "Error Marshalling JSON:")
 	}
 
 	if params.SendEmptyBody == false && len(body) == 0 {
@@ -143,36 +143,36 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 
 	err = doAuth(smtpConfig, c)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "Error doing auth:")
 	}
 	if err = c.Mail(source.From); err != nil {
-		return "", err
+		return "", errors.Wrap(err, "Error setting from:")
 	}
 	for _, addr := range source.To {
 		if err = c.Rcpt(addr); err != nil {
-			return "", err
+			return "", errors.Wrap(err, "Error setting to:")
 		}
 	}
 	for _, addr := range source.Bcc {
 		if err = c.Rcpt(addr); err != nil {
-			return "", err
+			return "", errors.Wrap(err, "Error setting bcc:")
 		}
 	}
 	wc, err = c.Data()
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "Error getting Data:")
 	}
 	_, err = wc.Write(messageData)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "Error writting message data:")
 	}
 	err = wc.Close()
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "Error closing:")
 	}
 	err = c.Quit()
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "Error quitting:")
 	}
 
 	return string(outbytes), err
