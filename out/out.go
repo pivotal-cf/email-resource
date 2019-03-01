@@ -30,7 +30,7 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 
 	err := json.Unmarshal(input, &indata)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "unmarshalling input")
 	}
 
 	err = validateConfiguration(indata)
@@ -40,8 +40,12 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 
 	source := indata.Source
 	params := indata.Params
+	debug := strings.EqualFold("true", params.Debug)
 	smtpConfig := source.SMTP
 
+	if debug {
+		logger.Println("Getting subject")
+	}
 	subject, err := fromTextOrFile(sourceRoot, params.SubjectText, params.Subject)
 	if err != nil {
 		return "", errors.Wrap(err, "Error getting Subject:")
@@ -50,6 +54,9 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 
 	var headers string
 	if params.Headers != "" {
+		if debug {
+			logger.Println("Getting headers")
+		}
 		headers, err = readSource(sourceRoot, params.Headers)
 		if err != nil {
 			return "", errors.Wrap(err, "unable to read source file for headers")
@@ -57,12 +64,18 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 		headers = strings.Trim(headers, "\n")
 	}
 
+	if debug {
+		logger.Println("Getting Body")
+	}
 	body, err := fromTextOrFile(sourceRoot, params.BodyText, params.Body)
 	if err != nil {
 		return "", errors.Wrap(err, "Error getting Body:")
 	}
 
 	if params.To != "" {
+		if debug {
+			logger.Println("Getting To Params")
+		}
 		var toList string
 		toList, err = readSource(sourceRoot, params.To)
 		if err != nil {
@@ -77,6 +90,9 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 	}
 
 	if params.Bcc != "" {
+		if debug {
+			logger.Println("Getting BCC Params")
+		}
 		var bccList string
 		bccList, err = readSource(sourceRoot, params.Bcc)
 		if err != nil {
@@ -106,6 +122,10 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 		logger.Println("Message not sent because the message body is empty and send_empty_body parameter was set to false. Github readme: https://github.com/pivotal-cf/email-resource")
 		return string(outbytes), nil
 	}
+
+	if debug {
+		logger.Println("Building Message Payload")
+	}
 	var messageData []byte
 	messageData = append(messageData, []byte("To: "+strings.Join(source.To, ", ")+"\n")...)
 	messageData = append(messageData, []byte("From: "+source.From+"\n")...)
@@ -119,9 +139,13 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 
 	var c *smtp.Client
 	var wc io.WriteCloser
+
+	if debug {
+		logger.Println("Dialing")
+	}
 	c, err = smtp.Dial(fmt.Sprintf("%s:%s", smtpConfig.Host, smtpConfig.Port))
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "Error Dialing smtp server")
 	}
 	defer c.Close()
 
@@ -130,8 +154,14 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 	if smtpConfig.HostOrigin != "" {
 		hostOrigin = smtpConfig.HostOrigin
 	}
+	if debug {
+		logger.Println("Saying Hello to SMTP Server")
+	}
 	if err = c.Hello(hostOrigin); err != nil {
 		return "", errors.Wrap(err, fmt.Sprintf("unable to connect with hello with host name %s, try setting property host_origin", hostOrigin))
+	}
+	if debug {
+		logger.Println("STARTTLS with SMTP Server")
 	}
 	if ok, _ := c.Extension("STARTTLS"); ok {
 		config := tlsConfig(smtpConfig)
@@ -141,41 +171,65 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 		}
 	}
 
+	if debug {
+		logger.Println("Authenticating with SMTP Server")
+	}
 	err = doAuth(smtpConfig, c)
 	if err != nil {
 		return "", errors.Wrap(err, "Error doing auth:")
 	}
+	if debug {
+		logger.Println("Setting From")
+	}
 	if err = c.Mail(source.From); err != nil {
 		return "", errors.Wrap(err, "Error setting from:")
+	}
+	if debug {
+		logger.Println("Setting TO")
 	}
 	for _, addr := range source.To {
 		if err = c.Rcpt(addr); err != nil {
 			return "", errors.Wrap(err, "Error setting to:")
 		}
 	}
+	if debug {
+		logger.Println("Setting BCC")
+	}
 	for _, addr := range source.Bcc {
 		if err = c.Rcpt(addr); err != nil {
 			return "", errors.Wrap(err, "Error setting bcc:")
 		}
 	}
+	if debug {
+		logger.Println("Getting Data from SMTP Server")
+	}
 	wc, err = c.Data()
 	if err != nil {
 		return "", errors.Wrap(err, "Error getting Data:")
+	}
+	if debug {
+		logger.Println("Writing message to SMTP Server")
 	}
 	_, err = wc.Write(messageData)
 	if err != nil {
 		return "", errors.Wrap(err, "Error writting message data:")
 	}
+	if debug {
+		logger.Println("Closing connection to SMTP Server")
+	}
 	err = wc.Close()
 	if err != nil {
 		return "", errors.Wrap(err, "Error closing:")
+	}
+	if debug {
+		logger.Println("Quitting connection to SMTP Server")
 	}
 	err = c.Quit()
 	if err != nil {
 		return "", errors.Wrap(err, "Error quitting:")
 	}
 
-	return string(outbytes), err
+	return string(outbytes), nil
 }
 
 func validateConfiguration(indata Input) error {

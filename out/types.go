@@ -25,6 +25,7 @@ type Params struct {
 	HeadersText   string `json:"headers_text"`
 	To            string `json:"to"`
 	Bcc           string `json:"bcc"`
+	Debug         string `json:"debug"`
 }
 
 type SMTP struct {

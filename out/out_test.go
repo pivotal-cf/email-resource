@@ -493,7 +493,7 @@ Header-3: value-3
 		It("should print an error and exit 1", func() {
 			output, err := out.Execute(sourceRoot, "", []byte(""))
 			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(BeEquivalentTo("unexpected end of JSON input"))
+			Expect(err.Error()).To(BeEquivalentTo("unmarshalling input: unexpected end of JSON input"))
 			Expect(output).Should(BeEmpty())
 		})
 	})
