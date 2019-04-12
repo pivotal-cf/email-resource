@@ -1,9 +1,9 @@
 # Email Resource
 
-A [Concourse](http://concourse.ci) resource that sends emails.
+A [Concourse](http://concourse-ci.org) resource that sends emails.
 
 ## Getting started
-Add the following [Resource Type](http://concourse.ci/configuring-resource-types.html) to your Concourse pipeline
+Add the following [Resource Type](https://concourse-ci.org/resource-types.html) to your Concourse pipeline
 ```yaml
 resource_types:
   - name: email
@@ -88,7 +88,7 @@ resources:
 ```
 Note that `to` is an array, and that `port` is a string.
 If you're using `fly configure` with the `--load-vars-from` (`-l`) substitutions, every `{{ variable }}`
-[automatically gets converted to a string](http://concourse.ci/fly-cli.html).
+[automatically gets converted to a string](http://concourse-ci.org/fly.html).
 But for literals you need to surround it with quotes.
 
 ## Behavior
@@ -125,7 +125,7 @@ For example, a build plan might contain this if using generated list of recipien
       to: generated-to-file
 ```
 
-You can use the values below in any of the source files or text properties to access the corresponding metadata made available by concourse, as documented [here](http://concourse.ci/implementing-resources.html)
+You can use the values below in any of the source files or text properties to access the corresponding metadata made available by concourse, as documented [here](https://concourse-ci.org/implementing-resource-types.html)
 
 * `${BUILD_ID}`
 * `${BUILD_NAME}`
