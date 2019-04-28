@@ -4,7 +4,6 @@ import:
   version: ^0.8.0
 testImport:
 - package: github.com/onsi/ginkgo
-  version: 25380c62e61d3f90436be125b8127dbae578fdef
   subpackages:
   - config
   - internal/codelocation
@@ -21,7 +20,6 @@ testImport:
   - reporters/stenographer
   - types
 - package: github.com/onsi/gomega
-  version: d6c945f9fdbf6cad99e85b0feff591caa268e0db
   subpackages:
   - format
   - internal/assertion
