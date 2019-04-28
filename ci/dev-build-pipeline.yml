@@ -21,29 +21,11 @@ jobs:
       - get: source
         trigger: true
     - task: test
-      config:
-        platform: linux
-        image_resource:
-          type: docker-image
-          source:
-            repository: golang
-        run:
-          path: source/ci/tasks/runTests.sh
-        inputs:
-        - name: source
+      file: source/ci/tasks/runTests.yml
     - task: build
-      config:
-        platform: linux
-        image_resource:
-          type: docker-image
-          source:
-            repository: golang
-        run:
-          path: source/ci/tasks/dev-build.sh
-        inputs:
-        - name: source
-        outputs:
-        - name: compiled-output
+      file: source/ci/tasks/build.yml
+      params:
+        DEV: true
     - put: docker-registry
       params:
         build: compiled-output

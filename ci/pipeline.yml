@@ -44,29 +44,9 @@ jobs:
       - get: source
         trigger: true
     - task: test
-      config:
-        platform: linux
-        image_resource:
-          type: docker-image
-          source:
-            repository: golang
-        run:
-          path: source/ci/tasks/runTests.sh
-        inputs:
-        - name: source
+      file: source/ci/tasks/runTests.yml
     - task: build
-      config:
-        platform: linux
-        image_resource:
-          type: docker-image
-          source:
-            repository: golang
-        run:
-          path: source/ci/tasks/build.sh
-        inputs:
-        - name: source
-        outputs:
-        - name: compiled-output
+      file: source/ci/tasks/build.yml
     - put: draft-email-resource
       params:
         name: compiled-output/name
@@ -83,30 +63,9 @@ jobs:
       - get: releases
         trigger: true
     - task: prepare
-      config:
-        platform: linux
-        image_resource:
-          type: docker-image
-          source:
-            repository: concourse/buildroot
-            tag: git
-        run:
-          path: sh
-          args:
-          - -exc
-          - |
-            cp /etc/ssl/certs/ca-certificates.crt output/ca-certificates.crt
-            cp source/Dockerfile output/.
-            mkdir output/bin
-            cp releases/in output/bin/.
-            cp releases/out output/bin/.
-            cp releases/check output/bin/.
-            chmod +x output/bin/*
-        inputs:
-        - name: source
-        - name: releases
-        outputs:
-        - name: output
+      file: source/ci/tasks/build.yml
     - put: docker-registry
       params:
         build: output
+        tag_as_latest: true
+        tag: output/version
