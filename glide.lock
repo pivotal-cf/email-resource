@@ -1,6 +1,8 @@
-hash: efe1c933a98f5f888c070aa82ad4cbd7a418d337c4f6c44e3b582c2b52804b2e
-updated: 2019-04-28T14:09:53.534344-07:00
+hash: 36d29a6763b22a4fb1f5a04ba94b9fb809a612f294c2dac2084b1abe7e2d6ac4
+updated: 2019-04-29T16:36:13.981294-07:00
 imports:
+- name: github.com/domodwyer/mailyak
+  version: 89444b05799b115121931b3b6bd05e820e69dc8b
 - name: github.com/pkg/errors
   version: ba968bfe8b2f7e042a574c888954fccecfa385b4
 testImports:

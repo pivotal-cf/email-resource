@@ -1,6 +1,8 @@
 package out
 
-import "time"
+import (
+	"time"
+)
 
 //Input - Struct that represents the input to out
 type Input struct {
@@ -12,20 +14,23 @@ type Source struct {
 	SMTP SMTP `json:"smtp"`
 	From string
 	To   []string
+	Cc   []string
 	Bcc  []string
 }
 
 type Params struct {
-	Subject       string
-	SubjectText   string `json:"subject_text"`
-	Body          string
-	BodyText      string `json:"body_text"`
-	SendEmptyBody bool   `json:"send_empty_body"`
-	Headers       string
-	HeadersText   string `json:"headers_text"`
-	To            string `json:"to"`
-	Bcc           string `json:"bcc"`
-	Debug         string `json:"debug"`
+	Subject        string
+	SubjectText    string `json:"subject_text"`
+	Body           string
+	BodyText       string `json:"body_text"`
+	SendEmptyBody  bool   `json:"send_empty_body"`
+	Headers        string
+	HeadersText    string   `json:"headers_text"`
+	To             string   `json:"to"`
+	Cc             string   `json:"cc"`
+	Bcc            string   `json:"bcc"`
+	Debug          string   `json:"debug"`
+	AttacmentGlobs []string `json:"attachement_globs"`
 }
 
 type SMTP struct {

@@ -2,6 +2,8 @@ package: github.com/pivotal-cf/email-resource
 import:
 - package: github.com/pkg/errors
   version: ^0.8.0
+- package: github.com/domodwyer/mailyak
+  version: ~3.1.1
 testImport:
 - package: github.com/onsi/ginkgo
   subpackages:

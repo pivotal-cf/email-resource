@@ -1,14 +1,9 @@
 package out
 
 import (
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
-	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
-	"net/smtp"
 	"os"
 	"path/filepath"
 	"strings"
@@ -52,16 +47,22 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 	}
 	subject = strings.Trim(subject, "\n")
 
-	var headers string
+	headers := make(map[string]string)
 	if params.Headers != "" {
 		if debug {
 			logger.Println("Getting headers")
 		}
-		headers, err = readSource(sourceRoot, params.Headers)
+		var headersString string
+		headersString, err = readSource(sourceRoot, params.Headers)
 		if err != nil {
 			return "", errors.Wrap(err, "unable to read source file for headers")
 		}
-		headers = strings.Trim(headers, "\n")
+		headersString = strings.Trim(headersString, "\n")
+		lines := strings.Split(headersString, "\n")
+		for _, line := range lines {
+			kv := strings.Split(line, ": ")
+			headers[kv[0]] = kv[1]
+		}
 	}
 
 	if debug {
@@ -85,6 +86,23 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 			toListArray := strings.Split(toList, ",")
 			for _, toAddress := range toListArray {
 				source.To = append(source.To, strings.TrimSpace(toAddress))
+			}
+		}
+	}
+
+	if params.Cc != "" {
+		if debug {
+			logger.Println("Getting CC Params")
+		}
+		var ccList string
+		ccList, err = readSource(sourceRoot, params.Cc)
+		if err != nil {
+			return "", errors.Wrap(err, "Error getting CC:")
+		}
+		if len(ccList) > 0 {
+			ccListArray := strings.Split(ccList, ",")
+			for _, ccAddress := range ccListArray {
+				source.Cc = append(source.Cc, strings.TrimSpace(ccAddress))
 			}
 		}
 	}
@@ -126,107 +144,39 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 	if debug {
 		logger.Println("Building Message Payload")
 	}
-	var messageData []byte
-	messageData = append(messageData, []byte("To: "+strings.Join(source.To, ", ")+"\n")...)
-	messageData = append(messageData, []byte("From: "+source.From+"\n")...)
-	if headers != "" {
-		messageData = append(messageData, []byte(headers+"\n")...)
-	}
-	messageData = append(messageData, []byte("Subject: "+subject+"\n")...)
-
-	messageData = append(messageData, []byte("\n")...)
-	messageData = append(messageData, []byte(body)...)
-
-	var c *smtp.Client
-	var wc io.WriteCloser
-
-	if debug {
-		logger.Println("Dialing")
-	}
-	c, err = smtp.Dial(fmt.Sprintf("%s:%s", smtpConfig.Host, smtpConfig.Port))
-	if err != nil {
-		return "", errors.Wrap(err, "Error Dialing smtp server")
-	}
-	defer c.Close()
-
-	hostOrigin := "localhost"
-
-	if smtpConfig.HostOrigin != "" {
-		hostOrigin = smtpConfig.HostOrigin
-	}
-	if debug {
-		logger.Println("Saying Hello to SMTP Server")
-	}
-	if err = c.Hello(hostOrigin); err != nil {
-		return "", errors.Wrap(err, fmt.Sprintf("unable to connect with hello with host name %s, try setting property host_origin", hostOrigin))
-	}
-	if debug {
-		logger.Println("STARTTLS with SMTP Server")
-	}
-	if ok, _ := c.Extension("STARTTLS"); ok {
-		config := tlsConfig(smtpConfig)
-
-		if err = c.StartTLS(config); err != nil {
-			return "", errors.Wrap(err, "unable to start TLS")
+	sender := NewSender(smtpConfig.Host, smtpConfig.Port, debug, logger)
+	sender.HostOrigin = smtpConfig.HostOrigin
+	sender.CaCert = smtpConfig.CaCert
+	sender.Anonymous = smtpConfig.Anonymous
+	sender.LoginAuth = smtpConfig.LoginAuth
+	sender.SkipSSLValidation = smtpConfig.SkipSSLValidation
+	sender.Username = smtpConfig.Username
+	sender.Password = smtpConfig.Password
+	sender.From = source.From
+	sender.To = source.To
+	sender.Cc = source.Cc
+	sender.Bcc = source.Bcc
+	sender.Subject = subject
+	sender.Body = body
+	sender.Headers = headers
+	if len(params.AttacmentGlobs) > 0 {
+		for _, glob := range params.AttacmentGlobs {
+			paths, err := filepath.Glob(glob)
+			if err != nil {
+				return "", errors.Wrapf(err, "Error getting files from glob %s", glob)
+			}
+			for _, attachmentPath := range paths {
+				err = sender.AddAttachment(attachmentPath)
+				if err != nil {
+					return "", errors.Wrapf(err, "Error adding attachement from path %s", attachmentPath)
+				}
+			}
 		}
 	}
+	err = sender.Send()
 
-	if debug {
-		logger.Println("Authenticating with SMTP Server")
-	}
-	err = doAuth(smtpConfig, c)
 	if err != nil {
-		return "", errors.Wrap(err, "Error doing auth:")
-	}
-	if debug {
-		logger.Println("Setting From")
-	}
-	if err = c.Mail(source.From); err != nil {
-		return "", errors.Wrap(err, "Error setting from:")
-	}
-	if debug {
-		logger.Println("Setting TO")
-	}
-	for _, addr := range source.To {
-		if err = c.Rcpt(addr); err != nil {
-			return "", errors.Wrap(err, "Error setting to:")
-		}
-	}
-	if debug {
-		logger.Println("Setting BCC")
-	}
-	for _, addr := range source.Bcc {
-		if err = c.Rcpt(addr); err != nil {
-			return "", errors.Wrap(err, "Error setting bcc:")
-		}
-	}
-	if debug {
-		logger.Println("Getting Data from SMTP Server")
-	}
-	wc, err = c.Data()
-	if err != nil {
-		return "", errors.Wrap(err, "Error getting Data:")
-	}
-	if debug {
-		logger.Println("Writing message to SMTP Server")
-	}
-	_, err = wc.Write(messageData)
-	if err != nil {
-		return "", errors.Wrap(err, "Error writting message data:")
-	}
-	if debug {
-		logger.Println("Closing connection to SMTP Server")
-	}
-	err = wc.Close()
-	if err != nil {
-		return "", errors.Wrap(err, "Error closing:")
-	}
-	if debug {
-		logger.Println("Quitting connection to SMTP Server")
-	}
-	err = c.Quit()
-	if err != nil {
-		return "", errors.Wrap(err, "Error quitting:")
+		return "", err
 	}
 
 	return string(outbytes), nil
@@ -263,60 +213,6 @@ func validateConfiguration(indata Input) error {
 		}
 	}
 	return nil
-}
-
-func doAuth(smtpConfig SMTP, c *smtp.Client) error {
-	if smtpConfig.Anonymous {
-		return nil
-	}
-	if smtpConfig.LoginAuth {
-		auth := LoginAuth(smtpConfig.Username, smtpConfig.Password)
-
-		if auth != nil {
-			if ok, _ := c.Extension("AUTH"); ok {
-				if err := c.Auth(auth); err != nil {
-					return errors.Wrap(err, "unable to auth using type Login Auth")
-				}
-			}
-		}
-	} else {
-		auth := smtp.PlainAuth(
-			"",
-			smtpConfig.Username,
-			smtpConfig.Password,
-			smtpConfig.Host,
-		)
-		if auth != nil {
-			if ok, _ := c.Extension("AUTH"); ok {
-				if err := c.Auth(auth); err != nil {
-					return errors.Wrap(err, "unable to auth using type Plain Auth")
-				}
-			}
-		}
-	}
-	return nil
-}
-
-func tlsConfig(smtpConfig SMTP) *tls.Config {
-	config := &tls.Config{
-		ServerName: smtpConfig.Host,
-	}
-
-	if smtpConfig.SkipSSLValidation {
-		config.InsecureSkipVerify = smtpConfig.SkipSSLValidation
-		return config
-	}
-
-	if smtpConfig.CaCert != "" {
-		caPool := x509.NewCertPool()
-		caPool.AppendCertsFromPEM([]byte(smtpConfig.CaCert))
-
-		config.RootCAs = caPool
-
-		return config
-	}
-
-	return config
 }
 
 func replaceTokens(sourceString string) string {

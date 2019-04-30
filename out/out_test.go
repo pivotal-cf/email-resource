@@ -6,7 +6,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"strings"
 	"time"
 
 	. "github.com/onsi/ginkgo"
@@ -164,9 +163,10 @@ even empty lines
 		Expect(delivery.Sender).To(Equal("sender@example.com"))
 		Expect(delivery.Recipients).To(Equal([]string{"recipient@example.com", "recipient+2@example.com", "recipient+3@example.com"}))
 
-		data := strings.Split(string(delivery.Data), "\n")
-		Expect(data).To(ContainElement("To: recipient@example.com, recipient+2@example.com, recipient+3@example.com"))
-		Expect(data).To(ContainElement("Subject: some subject line"))
+		Expect(string(delivery.Data)).To(ContainSubstring("To: recipient@example.com"))
+		Expect(string(delivery.Data)).To(ContainSubstring("To: recipient+2@example.com"))
+		Expect(string(delivery.Data)).To(ContainSubstring("To: recipient+3@example.com"))
+		Expect(string(delivery.Data)).To(ContainSubstring("some subject line"))
 		Expect(string(delivery.Data)).To(ContainSubstring(`this is a body
 it has many lines
 
@@ -192,8 +192,7 @@ even empty lines
 
 				Expect(smtpServer.Deliveries).To(HaveLen(1))
 				delivery := smtpServer.Deliveries[0]
-				data := strings.Split(string(delivery.Data), "\n")
-				Expect(data).To(ContainElement("Subject: some subject line"))
+				Expect(string(delivery.Data)).To(ContainSubstring("some subject line"))
 			})
 		})
 
@@ -222,7 +221,7 @@ even empty lines
 			Expect(output).ToNot(BeEmpty())
 			Expect(smtpServer.Deliveries).To(HaveLen(1))
 			delivery := smtpServer.Deliveries[0]
-			Expect(delivery.Data).To(ContainSubstring("Subject: some subject line"))
+			Expect(string(delivery.Data)).To(ContainSubstring("some subject line"))
 
 		})
 	})
@@ -238,7 +237,7 @@ even empty lines
 			out.Execute(sourceRoot, "", []byte(inputdata))
 			Expect(smtpServer.Deliveries).To(HaveLen(1))
 			delivery := smtpServer.Deliveries[0]
-			Expect(delivery.Data).To(ContainSubstring(`Subject: some subject line for #5`))
+			Expect(string(delivery.Data)).To(ContainSubstring("some subject line for #5"))
 		}
 
 		BeforeEach(func() {
@@ -281,8 +280,8 @@ Header-2: value`
 
 			Expect(smtpServer.Deliveries).To(HaveLen(1))
 			delivery := smtpServer.Deliveries[0]
-			Expect(delivery.Data).To(ContainSubstring("Header-1: value\n"))
-			Expect(delivery.Data).To(ContainSubstring("Header-2: value\n"))
+			Expect(string(delivery.Data)).To(ContainSubstring("Header-1: value\n"))
+			Expect(string(delivery.Data)).To(ContainSubstring("Header-2: value\n"))
 			Expect(string(delivery.Data)).To(ContainSubstring(`
 this is a body
 it has many lines
@@ -307,9 +306,9 @@ Header-3: value-3
 				out.Execute(sourceRoot, "", []byte(inputdata))
 				Expect(smtpServer.Deliveries).To(HaveLen(1))
 				delivery := smtpServer.Deliveries[0]
-				Expect(delivery.Data).To(ContainSubstring("Header-1: value-1\n"))
-				Expect(delivery.Data).To(ContainSubstring("Header-2: value-2\n"))
-				Expect(delivery.Data).To(ContainSubstring("Header-3: value-3\n"))
+				Expect(string(delivery.Data)).To(ContainSubstring("Header-1: value-1\n"))
+				Expect(string(delivery.Data)).To(ContainSubstring("Header-2: value-2\n"))
+				Expect(string(delivery.Data)).To(ContainSubstring("Header-3: value-3\n"))
 			})
 		})
 	})
@@ -375,7 +374,7 @@ Header-3: value-3
 				Expect(output).ShouldNot(BeEmpty())
 				Expect(smtpServer.Deliveries).To(HaveLen(1))
 				delivery := smtpServer.Deliveries[0]
-				Expect(delivery.Data).To(ContainSubstring("Subject: some subject line\n"))
+				Expect(string(delivery.Data)).To(ContainSubstring("some subject line"))
 			})
 		})
 		Context("when the 'SendEmptyBody' parameter is false", func() {
