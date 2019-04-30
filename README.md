@@ -34,7 +34,7 @@ Within smtp:
 * `skip_ssl_validation`: *Optional.* Whether or not to skip ssl validation.  true/false are valid options.  If omitted default is false
 * `ca_cert`: *Optional.* Certificates content to verify servers with custom certificates. Only considered if `skip_ssl_validation` is `false`.
 * `host_origin`: *Optional.* Host to send `Hello` from.  If not provided `localhost` is used
-* `login_auth`: *Optional.* This will enable the flag to use Login Auth for authentcation. true/false are valid options. If omitted default is false
+* `login_auth`: *Optional.* This will enable the flag to use Login Auth for authenticated. true/false are valid options. If omitted default is false
 
 Within source:
 * `from`: *Required.* Email Address to be sent from.

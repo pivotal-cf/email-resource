@@ -19,18 +19,18 @@ type Source struct {
 }
 
 type Params struct {
-	Subject        string
-	SubjectText    string `json:"subject_text"`
-	Body           string
-	BodyText       string `json:"body_text"`
-	SendEmptyBody  bool   `json:"send_empty_body"`
-	Headers        string
-	HeadersText    string   `json:"headers_text"`
-	To             string   `json:"to"`
-	Cc             string   `json:"cc"`
-	Bcc            string   `json:"bcc"`
-	Debug          string   `json:"debug"`
-	AttacmentGlobs []string `json:"attachement_globs"`
+	Subject         string
+	SubjectText     string `json:"subject_text"`
+	Body            string
+	BodyText        string `json:"body_text"`
+	SendEmptyBody   bool   `json:"send_empty_body"`
+	Headers         string
+	HeadersText     string   `json:"headers_text"`
+	To              string   `json:"to"`
+	Cc              string   `json:"cc"`
+	Bcc             string   `json:"bcc"`
+	Debug           string   `json:"debug"`
+	AttachmentGlobs []string `json:"attachment_globs"`
 }
 
 type SMTP struct {

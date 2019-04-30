@@ -1,0 +1,49 @@
+resource_types:
+  - name: email
+    type: docker-image
+    source:
+      repository: pcfseceng/email-resource
+      tag: {{docker-tag}}
+
+resources:
+  - name: send-an-email
+    type: email
+    source:
+      smtp:
+        host: {{smtp-host}}
+        port: {{smtp-port}}
+        username: {{smtp-username}}
+        password: {{smtp-password}}
+        host_origin: {{smtp-host-origin}}
+      from: {{email-from}}
+      to: [{{email-to}}]
+
+jobs:
+  - name: send-email
+    plan:
+      - task: prep-email
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: concourse/buildroot
+              tag: git
+          run:
+            path: sh
+            args:
+            - -exc
+            - |
+              echo -e "Cheers!\n\n \
+              Build ID: \${BUILD_ID} \n \
+              Build Name: \${BUILD_NAME} \n \
+              Build Job Name: \${BUILD_JOB_NAME} \n \
+              Build Pipeline Name: \${BUILD_PIPELINE_NAME} \n \
+              ATC External URL: \${ATC_EXTERNAL_URL}" > email-out/build.log
+          outputs:
+          - name: email-out
+      - put: send-an-email
+        params:
+          subject_text: "Testing Attachments"
+          body_text: "See Build Log"
+          attachment_globs: ["email-out/*.log"]

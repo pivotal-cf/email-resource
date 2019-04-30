@@ -159,8 +159,8 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 	sender.Subject = subject
 	sender.Body = body
 	sender.Headers = headers
-	if len(params.AttacmentGlobs) > 0 {
-		for _, glob := range params.AttacmentGlobs {
+	if len(params.AttachmentGlobs) > 0 {
+		for _, glob := range params.AttachmentGlobs {
 			paths, err := filepath.Glob(glob)
 			if err != nil {
 				return "", errors.Wrapf(err, "Error getting files from glob %s", glob)
