@@ -40,6 +40,9 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 	smtpConfig := source.SMTP
 
 	if debug {
+		logger.Println(fmt.Sprintf("Params: %+v", params))
+	}
+	if debug {
 		logger.Println("Getting subject")
 	}
 	subject, err := fromTextOrFile(sourceRoot, params.SubjectText, params.Subject)
@@ -162,10 +165,11 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 	sender.Headers = headers
 	if len(params.AttachmentGlobs) > 0 {
 		for _, glob := range params.AttachmentGlobs {
-			logger.Println(fmt.Sprintf("Looking for files with pattern %s", glob))
-			paths, err := filepath.Glob(glob)
+			globPath := filepath.Join(sourceRoot, glob)
+			logger.Println(fmt.Sprintf("Looking for files with pattern %s", globPath))
+			paths, err := filepath.Glob(globPath)
 			if err != nil {
-				return "", errors.Wrapf(err, "Error getting files from glob %s", glob)
+				return "", errors.Wrapf(err, "Error getting files from glob %s", globPath)
 			}
 			for _, attachmentPath := range paths {
 				logger.Println(fmt.Sprintf("Attaching files %s", attachmentPath))
