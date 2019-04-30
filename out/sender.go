@@ -10,17 +10,18 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/domodwyer/mailyak"
 	"github.com/pkg/errors"
 )
 
-func NewSender(host, port string, debug bool, logger *log.Logger) *Sender {
+func NewSender(host, port, username, password string, debug bool, logger *log.Logger) *Sender {
 	return &Sender{
 		host:        host,
 		port:        port,
 		attachments: make(map[string]io.Reader),
 		debug:       debug,
 		logger:      logger,
+		username:    username,
+		password:    password,
 	}
 }
 
@@ -33,13 +34,10 @@ type Sender struct {
 	HostOrigin                              string
 	CaCert                                  string
 	Anonymous, LoginAuth, SkipSSLValidation bool
-	Username                                string
-	Password                                string
+	username                                string
+	password                                string
 	From                                    string
-	To, Cc, Bcc                             []string
-	Subject                                 string
-	Body                                    string
-	Headers                                 map[string]string
+	To                                      []string
 }
 
 func (s *Sender) AddAttachment(filePath string) error {
@@ -51,28 +49,9 @@ func (s *Sender) AddAttachment(filePath string) error {
 	return nil
 }
 
-func (s *Sender) Send() error {
-	msg := mailyak.New("", nil)
-	msg.From(s.From)
-	msg.To(s.To...)
-	msg.Cc(s.Cc...)
-	msg.Bcc(s.Bcc...)
-	msg.Subject(s.Subject)
-	if s.Headers != nil {
-		for key, value := range s.Headers {
-			msg.AddHeader(key, value)
-		}
-	}
-	for name, reader := range s.attachments {
-		msg.Attach(name, reader)
-	}
-	msg.Plain().WriteString(s.Body)
-	buf, err := msg.MimeBuf()
-	if err != nil {
-		return errors.Wrap(err, "unable to get mime buffer")
-	}
-
+func (s *Sender) Send(msg []byte) error {
 	var c *smtp.Client
+	var err error
 	var wc io.WriteCloser
 	if s.debug {
 		s.logger.Println("Dialing")
@@ -121,8 +100,7 @@ func (s *Sender) Send() error {
 	if s.debug {
 		s.logger.Println("Setting TO")
 	}
-	to := append(append(s.To, s.Cc...), s.Bcc...)
-	for _, addr := range to {
+	for _, addr := range s.To {
 		if err = c.Rcpt(addr); err != nil {
 			return errors.Wrap(err, "Error setting to:")
 		}
@@ -136,9 +114,9 @@ func (s *Sender) Send() error {
 		return errors.Wrap(err, "Error getting Data:")
 	}
 	if s.debug {
-		s.logger.Println(fmt.Sprintf("Writing message to SMTP Server %s", string(buf.Bytes())))
+		s.logger.Println(fmt.Sprintf("Writing message to SMTP Server %s", string(msg)))
 	}
-	_, err = wc.Write(buf.Bytes())
+	_, err = wc.Write(msg)
 	if err != nil {
 		return errors.Wrap(err, "Error writting message data:")
 	}
@@ -184,7 +162,7 @@ func (s *Sender) doAuth(c *smtp.Client) error {
 		return nil
 	}
 	if s.LoginAuth {
-		auth := LoginAuth(s.Username, s.Password)
+		auth := LoginAuth(s.username, s.password)
 
 		if auth != nil {
 			if ok, _ := c.Extension("AUTH"); ok {
@@ -196,8 +174,8 @@ func (s *Sender) doAuth(c *smtp.Client) error {
 	} else {
 		auth := smtp.PlainAuth(
 			"",
-			s.Username,
-			s.Password,
+			s.username,
+			s.password,
 			s.host,
 		)
 		if auth != nil {
