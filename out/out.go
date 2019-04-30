@@ -2,6 +2,7 @@ package out
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -161,11 +162,13 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 	sender.Headers = headers
 	if len(params.AttachmentGlobs) > 0 {
 		for _, glob := range params.AttachmentGlobs {
+			logger.Println(fmt.Sprintf("Looking for files with pattern %s", glob))
 			paths, err := filepath.Glob(glob)
 			if err != nil {
 				return "", errors.Wrapf(err, "Error getting files from glob %s", glob)
 			}
 			for _, attachmentPath := range paths {
+				logger.Println(fmt.Sprintf("Attaching files %s", attachmentPath))
 				err = sender.AddAttachment(attachmentPath)
 				if err != nil {
 					return "", errors.Wrapf(err, "Error adding attachement from path %s", attachmentPath)
