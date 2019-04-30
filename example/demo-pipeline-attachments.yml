@@ -34,12 +34,7 @@ jobs:
             args:
             - -exc
             - |
-              echo -e "Cheers!\n\n \
-              Build ID: \${BUILD_ID} \n \
-              Build Name: \${BUILD_NAME} \n \
-              Build Job Name: \${BUILD_JOB_NAME} \n \
-              Build Pipeline Name: \${BUILD_PIPELINE_NAME} \n \
-              ATC External URL: \${ATC_EXTERNAL_URL}" > email-out/build.log
+              echo -e "Cheers!\n\n" > email-out/build.log
           outputs:
           - name: email-out
       - put: send-an-email
