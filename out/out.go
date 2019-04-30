@@ -132,6 +132,7 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 	}
 
 	mail := NewMailCreator()
+	mail.From = source.From
 	mail.To = source.To
 	mail.CC = source.Cc
 	mail.BCC = source.Bcc
