@@ -63,7 +63,7 @@ jobs:
       - get: releases
         trigger: true
     - task: prepare
-      file: source/ci/tasks/build.yml
+      file: source/ci/tasks/prepare.yml
     - put: docker-registry
       params:
         build: output
