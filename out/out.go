@@ -51,24 +51,6 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 	}
 	subject = strings.Trim(subject, "\n")
 
-	headers := make(map[string]string)
-	if params.Headers != "" {
-		if debug {
-			logger.Println("Getting headers")
-		}
-		var headersString string
-		headersString, err = readSource(sourceRoot, params.Headers)
-		if err != nil {
-			return "", errors.Wrap(err, "unable to read source file for headers")
-		}
-		headersString = strings.Trim(headersString, "\n")
-		lines := strings.Split(headersString, "\n")
-		for _, line := range lines {
-			kv := strings.Split(line, ": ")
-			headers[kv[0]] = kv[1]
-		}
-	}
-
 	if debug {
 		logger.Println("Getting Body")
 	}
@@ -148,21 +130,30 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 	if debug {
 		logger.Println("Building Message Payload")
 	}
-	sender := NewSender(smtpConfig.Host, smtpConfig.Port, debug, logger)
-	sender.HostOrigin = smtpConfig.HostOrigin
-	sender.CaCert = smtpConfig.CaCert
-	sender.Anonymous = smtpConfig.Anonymous
-	sender.LoginAuth = smtpConfig.LoginAuth
-	sender.SkipSSLValidation = smtpConfig.SkipSSLValidation
-	sender.Username = smtpConfig.Username
-	sender.Password = smtpConfig.Password
-	sender.From = source.From
-	sender.To = source.To
-	sender.Cc = source.Cc
-	sender.Bcc = source.Bcc
-	sender.Subject = subject
-	sender.Body = body
-	sender.Headers = headers
+
+	mail := NewMailCreator()
+	mail.To = source.To
+	mail.CC = source.Cc
+	mail.BCC = source.Bcc
+	mail.Subject = subject
+	mail.Body = body
+	if params.Headers != "" {
+		if debug {
+			logger.Println("Getting headers")
+		}
+		var headersString string
+		headersString, err = readSource(sourceRoot, params.Headers)
+		if err != nil {
+			return "", errors.Wrap(err, "unable to read source file for headers")
+		}
+		headersString = strings.Trim(headersString, "\n")
+		lines := strings.Split(headersString, "\n")
+		for _, line := range lines {
+			kv := strings.Split(line, ": ")
+			mail.AddHeader(kv[0], kv[1])
+		}
+	}
+
 	if len(params.AttachmentGlobs) > 0 {
 		for _, glob := range params.AttachmentGlobs {
 			globPath := filepath.Join(sourceRoot, glob)
@@ -173,15 +164,28 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 			}
 			for _, attachmentPath := range paths {
 				logger.Println(fmt.Sprintf("Attaching files %s", attachmentPath))
-				err = sender.AddAttachment(attachmentPath)
+				err = mail.AddAttachment(attachmentPath)
 				if err != nil {
 					return "", errors.Wrapf(err, "Error adding attachement from path %s", attachmentPath)
 				}
 			}
 		}
 	}
-	err = sender.Send()
 
+	sender := NewSender(smtpConfig.Host, smtpConfig.Port, smtpConfig.Username, smtpConfig.Password, debug, logger)
+	sender.HostOrigin = smtpConfig.HostOrigin
+	sender.CaCert = smtpConfig.CaCert
+	sender.Anonymous = smtpConfig.Anonymous
+	sender.LoginAuth = smtpConfig.LoginAuth
+	sender.SkipSSLValidation = smtpConfig.SkipSSLValidation
+	sender.From = source.From
+	sender.To = append(append(source.To, source.Cc...), source.Bcc...)
+
+	msg, err := mail.Compose()
+	if err != nil {
+		return "", errors.Wrapf(err, "Error composing mail")
+	}
+	err = sender.Send(msg)
 	if err != nil {
 		return "", err
 	}
