@@ -417,7 +417,7 @@ Header-3: value-3
 
 				output, err := out.Execute(sourceRoot, "", inputBytes)
 				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(BeEquivalentTo(`Invalid configuration: missing required field "source.to" or "params.to". Must specify at least one`))
+				Expect(err.Error()).To(BeEquivalentTo(`Invalid configuration: missing required field "source.to" or "params.to" or "params.to_text". Must specify at least one`))
 				Expect(output).Should(BeEmpty())
 			})
 		})

@@ -108,8 +108,11 @@ This is an output-only resource, so `check` and `in` actions are no-ops.
 * `body_text`: *Optional.* The email body as text. Either `body` or `body_text` required. `body_text` takes precedence.
 * `send_empty_body`: *Optional.* If true, send the email even if the body is empty (defaults to `false`).
 * `to`: *Optional.* Path to plain text file containing recipients which could be determined at build time. You can run a task before, which figures out the email of the person who committed last to a git repository (`git -C $source_path --no-pager show $(git -C $source_path rev-parse HEAD) -s --format='%ae' > output/email.txt`).  This file can contain `,` delimited list of email address if wanting to send to multiples.
+* `to_text`: *Optional.* The `,` delimited list of to addresses. `to_text` appends to any `to` in params or source
 * `cc`: *Optional.* Path to plain text file containing recipients which could be determined at build time. This file can contain `,` delimited list of email address if wanting to send to multiples.
+* `cc_text`: *Optional.* The `,` delimited list of cc addresses. `cc_text` appends to any `cc` in params or source
 * `bcc`: *Optional.* Path to plain text file containing recipients which could be determined at build time. This file can contain `,` delimited list of email address if wanting to send to multiples.
+* `bcc_text`: *Optional.* The `,` delimited list of bcc addresses. `bcc_text` appends to any `bcc` in params or source
 * `debug`: *Optional.* If set to `true` additional information send to stderr
 * `attachment_globs:` *Optional.* If provided will attach any file to the email that matches the glob path(s)
 

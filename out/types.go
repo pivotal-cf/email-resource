@@ -27,8 +27,11 @@ type Params struct {
 	Headers         string
 	HeadersText     string   `json:"headers_text"`
 	To              string   `json:"to"`
+	ToText          string   `json:"to_text"`
 	Cc              string   `json:"cc"`
+	CcText          string   `json:"cc_text"`
 	Bcc             string   `json:"bcc"`
+	BccText         string   `json:"bcc_text"`
 	Debug           string   `json:"debug"`
 	AttachmentGlobs []string `json:"attachment_globs"`
 }

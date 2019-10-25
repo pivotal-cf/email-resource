@@ -59,56 +59,23 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 		return "", errors.Wrap(err, "Error getting Body:")
 	}
 
-	if params.To != "" {
-		if debug {
-			logger.Println("Getting To Params")
-		}
-		var toList string
-		toList, err = readSource(sourceRoot, params.To)
-		if err != nil {
-			return "", errors.Wrap(err, "Error getting To:")
-		}
-		if len(toList) > 0 {
-			toListArray := strings.Split(toList, ",")
-			for _, toAddress := range toListArray {
-				source.To = append(source.To, strings.TrimSpace(toAddress))
-			}
-		}
+	toArray, err := sliceFromTextOrFile(sourceRoot, params.ToText, params.To)
+	if err != nil {
+		return "", errors.Wrap(err, "Error getting to list:")
 	}
+	source.To = append(source.To, toArray...)
 
-	if params.Cc != "" {
-		if debug {
-			logger.Println("Getting CC Params")
-		}
-		var ccList string
-		ccList, err = readSource(sourceRoot, params.Cc)
-		if err != nil {
-			return "", errors.Wrap(err, "Error getting CC:")
-		}
-		if len(ccList) > 0 {
-			ccListArray := strings.Split(ccList, ",")
-			for _, ccAddress := range ccListArray {
-				source.Cc = append(source.Cc, strings.TrimSpace(ccAddress))
-			}
-		}
+	ccArray, err := sliceFromTextOrFile(sourceRoot, params.CcText, params.Cc)
+	if err != nil {
+		return "", errors.Wrap(err, "Error getting cc list:")
 	}
+	source.Cc = append(source.Bcc, ccArray...)
 
-	if params.Bcc != "" {
-		if debug {
-			logger.Println("Getting BCC Params")
-		}
-		var bccList string
-		bccList, err = readSource(sourceRoot, params.Bcc)
-		if err != nil {
-			return "", errors.Wrap(err, "Error getting BCC:")
-		}
-		if len(bccList) > 0 {
-			bccListArray := strings.Split(bccList, ",")
-			for _, bccAddress := range bccListArray {
-				source.Bcc = append(source.Bcc, strings.TrimSpace(bccAddress))
-			}
-		}
+	bccArray, err := sliceFromTextOrFile(sourceRoot, params.BccText, params.Bcc)
+	if err != nil {
+		return "", errors.Wrap(err, "Error getting cc list:")
 	}
+	source.Bcc = append(source.Bcc, bccArray...)
 
 	var outdata Output
 	outdata.Version.Time = time.Now().UTC()
@@ -207,8 +174,8 @@ func validateConfiguration(indata Input) error {
 		return errors.New(`missing required field "source.from"`)
 	}
 
-	if len(indata.Source.To) == 0 && len(indata.Params.To) == 0 {
-		return errors.New(`missing required field "source.to" or "params.to". Must specify at least one`)
+	if len(indata.Source.To) == 0 && len(indata.Params.To) == 0 && len(indata.Params.ToText) == 0 {
+		return errors.New(`missing required field "source.to" or "params.to" or "params.to_text". Must specify at least one`)
 	}
 
 	if indata.Params.Subject == "" && indata.Params.SubjectText == "" {
@@ -259,4 +226,27 @@ func fromTextOrFile(sourceRoot, text, filePath string) (string, error) {
 		return readSource(sourceRoot, filePath)
 	}
 	return "", nil
+}
+
+func sliceFromTextOrFile(sourceRoot, text, filePath string) ([]string, error) {
+	var returnList []string
+	if text != "" {
+		listArray := strings.Split(text, ",")
+		for _, item := range listArray {
+			returnList = append(returnList, strings.TrimSpace(item))
+		}
+	}
+	if filePath != "" {
+		fileList, err := readSource(sourceRoot, filePath)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error reading file %s", filePath)
+		}
+		if len(fileList) > 0 {
+			listArray := strings.Split(fileList, ",")
+			for _, item := range listArray {
+				returnList = append(returnList, strings.TrimSpace(item))
+			}
+		}
+	}
+	return returnList, nil
 }
