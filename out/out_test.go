@@ -2,6 +2,7 @@ package out_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -50,6 +51,7 @@ var _ = Describe("Out", func() {
 		inputs.Params.Subject = "some/path/to/subject.txt"
 		inputs.Params.Body = "some/other/path/to/body"
 		inputs.Params.To = "some/other/path/to/to"
+		inputs.Params.ExportVarsFromFile = "some/other/path/to/customvars.txt"
 		createSource(inputs.Params.Subject, "some subject line")
 		createSource(inputs.Params.Body, `this is a body
 it has many lines
@@ -58,6 +60,7 @@ even empty lines
 
 !`)
 		createSource(inputs.Params.To, "recipient+3@example.com")
+		createSource(inputs.Params.ExportVarsFromFile, fmt.Sprintf("COMMIT_SHA=\"f8238e0dc56f9c58849d505ba7e5281949471812\"\nCOMMIT_SHORTSHA=\"g8238e0dc56f\""))
 	})
 
 	JustBeforeEach(func() {
@@ -263,6 +266,43 @@ even empty lines
 		})
 	})
 
+	Context("when the subject has template syntax with custom_exports file", func() {
+		BeforeEach(func() {
+			os.Setenv("BUILD_ID", "5")
+			createSource(inputs.Params.Subject, "some subject line for #${BUILD_ID} with commit SHORTSHA ${COMMIT_SHORTSHA}")
+		})
+		var subject string
+
+		verifyTemplateInterpolation := func() {
+			out.Execute(sourceRoot, "", []byte(inputdata))
+			Expect(smtpServer.Deliveries).To(HaveLen(1))
+			delivery := smtpServer.Deliveries[0]
+			Expect(string(delivery.Data)).To(ContainSubstring("some subject line for #5 with commit SHORTSHA g8238e0dc56f"))
+		}
+
+		BeforeEach(func() {
+			os.Setenv("BUILD_ID", "5")
+			subject = "some subject line for #${BUILD_ID} with commit SHORTSHA ${COMMIT_SHORTSHA}"
+		})
+
+		Context("when the subject is given as file", func() {
+			BeforeEach(func() {
+				createSource(inputs.Params.Subject, subject)
+			})
+
+			It("interpolates the template", verifyTemplateInterpolation)
+		})
+
+		Context("when the subject is given as text", func() {
+			BeforeEach(func() {
+				inputs.Params.Subject = ""
+				inputs.Params.SubjectText = subject
+			})
+
+			It("interpolates the template", verifyTemplateInterpolation)
+		})
+	})
+
 	Context("when a headers file is provided", func() {
 		var headers string
 
@@ -351,6 +391,48 @@ Header-3: value-3
 				inputs.Params.BodyText = "some body from text"
 			})
 			It("uses the body text", verifyBody("some body from text"))
+		})
+
+	})
+
+	Context("body with custom_exports file", func() {
+
+		verifyBody := func(expectedBody string) func() {
+			return func() {
+				output, err := out.Execute(sourceRoot, "", []byte(inputdata))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(output).ToNot(BeEmpty())
+
+				Expect(smtpServer.Deliveries).To(HaveLen(1))
+				delivery := smtpServer.Deliveries[0]
+
+				Expect(string(delivery.Data)).To(ContainSubstring(expectedBody))
+			}
+		}
+
+		Context("when body file is provided", func() {
+			BeforeEach(func() {
+				createSource(inputs.Params.Body, "some body for commit SHA ${COMMIT_SHA}")
+				inputs.Params.BodyText = ""
+			})
+
+			It("uses the text from the body file", verifyBody("some body for commit SHA f8238e0dc56f9c58849d505ba7e5281949471812"))
+		})
+
+		Context("when body text is provided", func() {
+			BeforeEach(func() {
+				inputs.Params.Body = ""
+				inputs.Params.BodyText = "some body for commit SHA ${COMMIT_SHA}"
+			})
+			It("uses the body text", verifyBody("some body for commit SHA f8238e0dc56f9c58849d505ba7e5281949471812"))
+		})
+
+		Context("when body text and body file is provided", func() {
+			BeforeEach(func() {
+				createSource(inputs.Params.Body, "some body from file")
+				inputs.Params.BodyText = "some body from text for commit SHA ${COMMIT_SHA}"
+			})
+			It("uses the body text", verifyBody("some body from text for commit SHA f8238e0dc56f9c58849d505ba7e5281949471812"))
 		})
 
 	})
