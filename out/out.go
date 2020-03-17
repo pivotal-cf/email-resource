@@ -69,7 +69,7 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "Error getting cc list:")
 	}
-	source.Cc = append(source.Bcc, ccArray...)
+	source.Cc = append(source.Cc, ccArray...)
 
 	bccArray, err := sliceFromTextOrFile(sourceRoot, params.BccText, params.Bcc)
 	if err != nil {
