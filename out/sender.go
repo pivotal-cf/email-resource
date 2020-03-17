@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/smtp"
+	"net/textproto"
 	"os"
 	"path/filepath"
 
@@ -102,6 +103,10 @@ func (s *Sender) Send(msg []byte) error {
 	}
 	for _, addr := range s.To {
 		if err = c.Rcpt(addr); err != nil {
+			if errCode, ok := err.(*textproto.Error); ok && errCode.Code == 550 {
+				s.logger.Printf("Skipping %s: %s\n", addr, err.Error())
+				continue
+			}
 			return errors.Wrap(err, "Error setting to:")
 		}
 	}
