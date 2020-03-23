@@ -19,21 +19,22 @@ type Source struct {
 }
 
 type Params struct {
-	Subject         string
-	SubjectText     string `json:"subject_text"`
-	Body            string
-	BodyText        string `json:"body_text"`
-	SendEmptyBody   bool   `json:"send_empty_body"`
-	Headers         string
-	HeadersText     string   `json:"headers_text"`
-	To              string   `json:"to"`
-	ToText          string   `json:"to_text"`
-	Cc              string   `json:"cc"`
-	CcText          string   `json:"cc_text"`
-	Bcc             string   `json:"bcc"`
-	BccText         string   `json:"bcc_text"`
-	Debug           string   `json:"debug"`
-	AttachmentGlobs []string `json:"attachment_globs"`
+	ExportVarsFromFile string `json:"custom_exports"` // File containing a list of properties in the format key=value, to be exported
+	Subject            string
+	SubjectText        string `json:"subject_text"`
+	Body               string
+	BodyText           string `json:"body_text"`
+	SendEmptyBody      bool   `json:"send_empty_body"`
+	Headers            string
+	HeadersText        string   `json:"headers_text"`
+	To                 string   `json:"to"`
+	ToText             string   `json:"to_text"`
+	Cc                 string   `json:"cc"`
+	CcText             string   `json:"cc_text"`
+	Bcc                string   `json:"bcc"`
+	BccText            string   `json:"bcc_text"`
+	Debug              string   `json:"debug"`
+	AttachmentGlobs    []string `json:"attachment_globs"`
 }
 
 type SMTP struct {
