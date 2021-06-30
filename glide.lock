@@ -6,8 +6,8 @@ imports:
 - name: github.com/pkg/errors
   version: ba968bfe8b2f7e042a574c888954fccecfa385b4
 testImports:
-- name: bitbucket.org/chrj/smtpd
-  version: 9ddcdbda0f7aebfb78b38b5688a50764d72ef78d
+- name: github.com/chrj/smtpd.git
+  version: b5f17a69f61110a91372d7e9bda3ee692e8b4f36
 - name: github.com/hpcloud/tail
   version: a1dbeea552b7c8df4b542c66073e393de198a800
   subpackages:

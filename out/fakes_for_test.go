@@ -4,7 +4,7 @@ import (
 	"crypto/tls"
 	"net"
 
-	"bitbucket.org/chrj/smtpd"
+	"github.com/chrj/smtpd.git"
 )
 
 type FakeSMTPServer struct {
