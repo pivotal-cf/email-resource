@@ -196,12 +196,13 @@ func validateConfiguration(indata Input) error {
 
 func replaceTokens(sourceString string) string {
 	var buildTokens = map[string]string{
-		"${BUILD_ID}":            os.Getenv("BUILD_ID"),
-		"${BUILD_NAME}":          os.Getenv("BUILD_NAME"),
-		"${BUILD_JOB_NAME}":      os.Getenv("BUILD_JOB_NAME"),
-		"${BUILD_PIPELINE_NAME}": os.Getenv("BUILD_PIPELINE_NAME"),
-		"${ATC_EXTERNAL_URL}":    os.Getenv("ATC_EXTERNAL_URL"),
-		"${BUILD_TEAM_NAME}":     os.Getenv("BUILD_TEAM_NAME"),
+		"${BUILD_ID}":            			os.Getenv("BUILD_ID"),
+		"${BUILD_NAME}":          			os.Getenv("BUILD_NAME"),
+		"${BUILD_JOB_NAME}":      			os.Getenv("BUILD_JOB_NAME"),
+		"${BUILD_PIPELINE_NAME}": 			os.Getenv("BUILD_PIPELINE_NAME"),
+		"${BUILD_PIPELINE_INSTANCE_VARS}": 	os.Getenv("BUILD_PIPELINE_INSTANCE_VARS"),
+		"${ATC_EXTERNAL_URL}":    			os.Getenv("ATC_EXTERNAL_URL"),
+		"${BUILD_TEAM_NAME}":     			os.Getenv("BUILD_TEAM_NAME"),
 	}
 	for k, v := range buildTokens {
 		sourceString = strings.Replace(sourceString, k, v, -1)

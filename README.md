@@ -139,6 +139,7 @@ You can use the values below in any of the source files or text properties to ac
 * `${BUILD_NAME}`
 * `${BUILD_JOB_NAME}`
 * `${BUILD_PIPELINE_NAME}`
+* `${BUILD_PIPELINE_INSTANCE_VARS}`
 * `${ATC_EXTERNAL_URL}`
 * `${BUILD_TEAM_NAME}`
 
