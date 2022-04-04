@@ -5,14 +5,18 @@ on:
     branches: [ develop ]
 
 jobs:
-
-  build:
-
+  publish:
     runs-on: ubuntu-latest
-
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: '1.17.6'
+      - run: go test -v ./...
+      - run: go build -o bin/check ./check/cmd
+      - run: go build -o bin/in ./in/cmd
+      - run: go build -o bin/out -ldflags "-X main.VERSION=dev-$(date +%Y%m%M%S%N)" ./out/cmd
       - name: Log in to Docker Hub
         uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
         with:
@@ -23,4 +27,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: dev-build
+          tags: pcfseceng/email-resource:dev-build
