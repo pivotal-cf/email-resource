@@ -3,6 +3,7 @@ image_resource:
   type: docker-image
   source:
     repository: harbor-repo.vmware.com/dockerhub-proxy-cache/library/golang
+    tag: 1.17.13
 run:
   path: source/ci/tasks/build.sh
 params:

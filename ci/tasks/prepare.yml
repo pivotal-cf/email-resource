@@ -3,7 +3,7 @@ image_resource:
   type: docker-image
   source:
     repository: harbor-repo.vmware.com/dockerhub-proxy-cache/library/ubuntu
-    tag: git
+    tag: latest
 run:
   path: source/ci/tasks/prepare.sh
 
