@@ -30,7 +30,7 @@ WORKING_DIR=$GOPATH/src/github.com/pivotal-cf/email-resource
 mkdir -p ${WORKING_DIR}
 cp -R ${SOURCE_DIR}/* ${WORKING_DIR}/.
 cd ${WORKING_DIR}
-glide install
+go mod download
 go build -o ${OUTPUT_DIR}/bin/check ./check/cmd
 go build -o ${OUTPUT_DIR}/bin/in ./in/cmd
 go build -o ${OUTPUT_DIR}/bin/out -ldflags "-X main.VERSION=${DRAFT_VERSION}" ./out/cmd
