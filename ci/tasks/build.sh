@@ -7,12 +7,8 @@ export GOPATH=$PWD/go
 export PATH=$GOPATH/bin:$PATH
 OUTPUT_DIR=$PWD/compiled-output
 SOURCE_DIR=$PWD/source
-
+go install github.com/xchapter7x/versioning@latest
 cp source/Dockerfile ${OUTPUT_DIR}/.
-
-go get github.com/Masterminds/glide
-go get github.com/xchapter7x/versioning
-
 cd ${SOURCE_DIR}
 if [ -d ".git" ]; then
   if ${DEV}; then
@@ -26,10 +22,6 @@ else
 fi
 echo "next version should be: ${DRAFT_VERSION}"
 
-WORKING_DIR=$GOPATH/src/github.com/pivotal-cf/email-resource
-mkdir -p ${WORKING_DIR}
-cp -R ${SOURCE_DIR}/* ${WORKING_DIR}/.
-cd ${WORKING_DIR}
 go mod download
 go build -o ${OUTPUT_DIR}/bin/check ./check/cmd
 go build -o ${OUTPUT_DIR}/bin/in ./in/cmd

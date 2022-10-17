@@ -12,14 +12,14 @@ resources:
   source:
     uri: git@github.com:pivotal-cf/email-resource.git
     branch: master
-    private_key: {{git-ssh-key}}
+    private_key: ((git-ssh-key))
 
 - name: draft-email-resource
   type: github-release
   source:
     owner: pivotal-cf
     repository: email-resource
-    access_token: {{github-token}}
+    access_token: ((github-token))
     drafts: true
 
 - name: releases
@@ -27,20 +27,20 @@ resources:
   source:
     owner: pivotal-cf
     repository: email-resource
-    access_token: {{github-token}}
+    access_token: ((github-token))
 
 - name: docker-registry
   type: docker-image
   source:
-    repository: {{docker-repository}}
-    username: {{docker-registry-username}}
-    password: {{docker-registry-password}}
-    tag: {{docker-tag}}
+    repository: ((docker-repository))
+    username: ((docker-registry-username))
+    password: ((docker-registry-password))
+    tag: ((docker-tag))
 
 jobs:
 - name: test-and-build
   plan:
-    - aggregate:
+    - in_parallel:
       - get: source
         trigger: true
     - task: test
@@ -58,7 +58,7 @@ jobs:
         - compiled-output/bin/check
 - name: deploy
   plan:
-    - aggregate:
+    - in_parallel:
       - get: source
       - get: releases
         trigger: true
