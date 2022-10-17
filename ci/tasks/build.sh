@@ -7,10 +7,9 @@ export GOPATH=$PWD/go
 export PATH=$GOPATH/bin:$PATH
 OUTPUT_DIR=$PWD/compiled-output
 SOURCE_DIR=$PWD/source
-
+go install github.com/xchapter7x/versioning@latest
 cp source/Dockerfile ${OUTPUT_DIR}/.
 cd ${SOURCE_DIR}
-go get github.com/xchapter7x/versioning
 if [ -d ".git" ]; then
   if ${DEV}; then
     ts=$(date +"%Y%m%M%S%N")
