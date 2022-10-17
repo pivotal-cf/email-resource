@@ -1,5 +1,4 @@
 #!/bin/bash -e
-cp /etc/ssl/certs/ca-certificates.crt output/ca-certificates.crt
 cp source/Dockerfile output/.
 mkdir -p output/bin
 cp releases/in output/bin/.
