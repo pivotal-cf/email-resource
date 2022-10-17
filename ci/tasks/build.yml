@@ -2,7 +2,7 @@ platform: linux
 image_resource:
   type: docker-image
   source:
-    repository: golang
+    repository: harbor-repo.vmware.com/dockerhub-proxy-cache/library/golang
 run:
   path: source/ci/tasks/build.sh
 params:

@@ -3,21 +3,21 @@ resources:
   type: git
   source:
     uri: git@github.com:pivotal-cf/email-resource.git
-    branch: {{dev-build-branch}}
-    private_key: {{git-ssh-key}}
+    branch: ((dev-build-branch))
+    private_key: ((git-ssh-key))
 
 - name: docker-registry
   type: docker-image
   source:
-    repository: {{docker-repository}}
-    username: {{docker-registry-username}}
-    password: {{docker-registry-password}}
-    tag: {{docker-dev-build-tag}}
+    repository: ((docker-repository))
+    username: ((docker-registry-username))
+    password: ((docker-registry-password))
+    tag: ((docker-dev-build-tag))
 
 jobs:
 - name: test-and-build
   plan:
-    - aggregate:
+    - in_parallel:
       - get: source
         trigger: true
     - task: test
