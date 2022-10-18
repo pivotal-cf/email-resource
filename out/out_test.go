@@ -162,10 +162,7 @@ even empty lines
 		delivery := smtpServer.Deliveries[0]
 		Expect(delivery.Sender).To(Equal("sender@example.com"))
 		Expect(delivery.Recipients).To(Equal([]string{"recipient@example.com", "recipient+2@example.com", "recipient+3@example.com"}))
-
-		Expect(string(delivery.Data)).To(ContainSubstring("To: recipient@example.com"))
-		Expect(string(delivery.Data)).To(ContainSubstring("To: recipient+2@example.com"))
-		Expect(string(delivery.Data)).To(ContainSubstring("To: recipient+3@example.com"))
+		Expect(string(delivery.Data)).To(ContainSubstring("To: recipient@example.com,recipient+2@example.com,recipient+3@example.com"))
 		Expect(string(delivery.Data)).To(ContainSubstring("some subject line"))
 		Expect(string(delivery.Data)).To(ContainSubstring(`this is a body
 it has many lines

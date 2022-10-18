@@ -3,7 +3,7 @@ package out_test
 import (
 	"bytes"
 
-	"github.com/domodwyer/mailyak"
+	"github.com/domodwyer/mailyak/v3"
 	"github.com/pivotal-cf/email-resource/out"
 	"github.com/pivotal-cf/email-resource/out/fakes"
 
