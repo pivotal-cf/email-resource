@@ -166,15 +166,12 @@ Content-Type: text/html; charset="UTF-8"
 `email-resource` is written in [Go](https://golang.org/).
 To build the binary yourself, follow these steps:
 
-* Install `Go`.
-* Install [Glide](https://github.com/Masterminds/glide), a dependency management tool for Go.
-* Clone the repo:
-  - `mkdir -p $(go env GOPATH)/src/github.com/pivotal-cf`
-  - `cd $(go env GOPATH)/src/github.com/pivotal-cf`
+* Install `Go`. (tested with 1.17)
+* Clone the repo
   - `git clone git@github.com:pivotal-cf/email-resource.git`
-* Install dependencies:
   - `cd email-resource`
-  - `glide install`
+* Build or test:
+  - `go test .\... -v`
   - `go build -o bin/check check/cmd/*.go`
   - `go build -o bin/in in/cmd/*.go`
   - `go build -o bin/out out/cmd/*.go`
