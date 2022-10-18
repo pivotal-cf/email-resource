@@ -170,8 +170,7 @@ To build the binary yourself, follow these steps:
 * Clone the repo
   - `git clone git@github.com:pivotal-cf/email-resource.git`
   - `cd email-resource`
-* Build or test:
-  - `go test .\... -v`
+* Build:
   - `go build -o bin/check check/cmd/*.go`
   - `go build -o bin/in in/cmd/*.go`
   - `go build -o bin/out out/cmd/*.go`
@@ -181,4 +180,4 @@ For example: `GOOS=linux GOARCH=amd64 go build`.
 
 ## Testing
 
-To run the unit tests, use `go test $(glide nv)`.
+To run the unit tests, use `go test ./... -v`.
