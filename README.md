@@ -113,7 +113,7 @@ This is an output-only resource, so `check` and `in` actions are no-ops.
 * `cc_text`: *Optional.* The `,` delimited list of cc addresses. `cc_text` appends to any `cc` in params or source
 * `bcc`: *Optional.* Path to plain text file containing recipients which could be determined at build time. This file can contain `,` delimited list of email address if wanting to send to multiples.
 * `bcc_text`: *Optional.* The `,` delimited list of bcc addresses. `bcc_text` appends to any `bcc` in params or source
-* `debug`: *Optional.* If set to `true` additional information send to stderr
+* `debug`: *Optional.* If set to `"true"` (as a string) additional information send to stderr
 * `attachment_globs:` *Optional.* If provided will attach any file to the email that matches the glob path(s)
 
 For example, a build plan might contain this:
