@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	bitbucket.org/chrj/smtpd v0.0.0-20170817182725-9ddcdbda0f7a
-	github.com/domodwyer/mailyak v3.1.1+incompatible
+	github.com/domodwyer/mailyak/v3 v3.3.4
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.19.0
 	github.com/pkg/errors v0.8.1

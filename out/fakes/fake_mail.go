@@ -2,12 +2,12 @@
 package fakes
 
 import (
-	bytes "bytes"
-	io "io"
-	sync "sync"
+	"bytes"
+	"io"
+	"sync"
 
-	mailyak "github.com/domodwyer/mailyak"
-	out "github.com/pivotal-cf/email-resource/out"
+	mailyak "github.com/domodwyer/mailyak/v3"
+	"github.com/pivotal-cf/email-resource/out"
 )
 
 type FakeMail struct {

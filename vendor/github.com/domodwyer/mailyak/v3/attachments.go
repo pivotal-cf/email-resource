@@ -43,7 +43,7 @@ func (m *MailYak) Attach(name string, r io.Reader) {
 // name as the filename and mimeType as the specified MIME type of the content.
 // It is up to the user to ensure the mimeType is correct.
 //
-// r is not read until Send is called
+// r is not read until Send is called.
 func (m *MailYak) AttachWithMimeType(name string, r io.Reader, mimeType string) {
 	m.attachments = append(m.attachments, attachment{
 		filename: name,
@@ -60,7 +60,7 @@ func (m *MailYak) AttachWithMimeType(name string, r io.Reader, mimeType string) 
 // Files can be referenced by their name within the email using the cid URL
 // protocol:
 //
-// 		<img src="cid:myFileName"/>
+//	<img src="cid:myFileName"/>
 //
 // r is not read until Send is called and the MIME type will be detected
 // using https://golang.org/pkg/net/http/#DetectContentType
@@ -80,7 +80,7 @@ func (m *MailYak) AttachInline(name string, r io.Reader) {
 // Files can be referenced by their name within the email using the cid URL
 // protocol:
 //
-// 		<img src="cid:myFileName"/>
+//	<img src="cid:myFileName"/>
 //
 // r is not read until Send is called.
 func (m *MailYak) AttachInlineWithMimeType(name string, r io.Reader, mimeType string) {
@@ -103,8 +103,8 @@ func (m *MailYak) writeAttachments(mixed partCreator, splitter writeWrapper) err
 	h := make([]byte, sniffLen)
 
 	for _, item := range m.attachments {
-		hLen, err := item.content.Read(h)
-		if err != nil && err != io.EOF {
+		hLen, err := io.ReadFull(item.content, h)
+		if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
 			return err
 		}
 
@@ -143,16 +143,17 @@ func getMIMEHeader(a attachment, ctype string) textproto.MIMEHeader {
 	var disp string
 	var header textproto.MIMEHeader
 
+	cid := fmt.Sprintf("<%s>", a.filename)
 	if a.inline {
 		disp = fmt.Sprintf("inline;\n\tfilename=%q", a.filename)
 		header = textproto.MIMEHeader{
 			"Content-Type":              {ctype},
 			"Content-Disposition":       {disp},
 			"Content-Transfer-Encoding": {"base64"},
+			"Content-ID":                {cid},
 		}
 	} else {
 		disp = fmt.Sprintf("attachment;\n\tfilename=%q", a.filename)
-		cid := fmt.Sprintf("<%s>", a.filename)
 		header = textproto.MIMEHeader{
 			"Content-Type":              {ctype},
 			"Content-Disposition":       {disp},

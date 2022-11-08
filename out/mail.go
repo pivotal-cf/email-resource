@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/domodwyer/mailyak"
+	"github.com/domodwyer/mailyak/v3"
 	"github.com/pkg/errors"
 )
 
