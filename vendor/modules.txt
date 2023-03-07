@@ -1,8 +1,6 @@
 # bitbucket.org/chrj/smtpd v0.0.0-20170817182725-9ddcdbda0f7a
 ## explicit
 bitbucket.org/chrj/smtpd
-# github.com/domodwyer/mailyak v3.1.1+incompatible
-## explicit
 # github.com/domodwyer/mailyak/v3 v3.3.4
 ## explicit; go 1.12
 github.com/domodwyer/mailyak/v3
@@ -55,16 +53,15 @@ github.com/onsi/gomega/types
 # github.com/pkg/errors v0.8.1
 ## explicit
 github.com/pkg/errors
-# golang.org/x/net v0.0.0-20220225172249-27dd8689420f
+# golang.org/x/net v0.7.0
 ## explicit; go 1.17
 golang.org/x/net/html
 golang.org/x/net/html/atom
 golang.org/x/net/html/charset
-# golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e
+# golang.org/x/sys v0.5.0
 ## explicit; go 1.17
-golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
-# golang.org/x/text v0.3.7
+# golang.org/x/text v0.7.0
 ## explicit; go 1.17
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
