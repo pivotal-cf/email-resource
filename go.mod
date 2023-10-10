@@ -1,6 +1,6 @@
 module github.com/pivotal-cf/email-resource
 
-go 1.17
+go 1.20
 
 require (
 	bitbucket.org/chrj/smtpd v0.0.0-20170817182725-9ddcdbda0f7a
