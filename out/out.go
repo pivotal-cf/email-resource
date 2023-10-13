@@ -23,6 +23,7 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 	}
 
 	var indata Input
+	var customExportVars = make(map[string]string, 0)
 
 	err := json.Unmarshal(input, &indata)
 	if err != nil {
@@ -43,9 +44,20 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 		logger.Println(fmt.Sprintf("Params: %+v", params))
 	}
 	if debug {
+		logger.Println(fmt.Sprintf("Exporting properties from file: %s", params.ExportVarsFromFile))
+	}
+	err = exportVarsInFile(sourceRoot, params.ExportVarsFromFile, customExportVars)
+	if err != nil {
+		return "", errors.Wrap(err, "Unable to process file to export properties")
+	}
+	if debug {
+		logger.Println("Displaying environment variables")
+		logger.Println(strings.Join(os.Environ(), "\n"))
+	}
+	if debug {
 		logger.Println("Getting subject")
 	}
-	subject, err := fromTextOrFile(sourceRoot, params.SubjectText, params.Subject)
+	subject, err := fromTextOrFile(sourceRoot, params.SubjectText, params.Subject, customExportVars)
 	if err != nil {
 		return "", errors.Wrap(err, "Error getting Subject:")
 	}
@@ -54,24 +66,24 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 	if debug {
 		logger.Println("Getting Body")
 	}
-	body, err := fromTextOrFile(sourceRoot, params.BodyText, params.Body)
+	body, err := fromTextOrFile(sourceRoot, params.BodyText, params.Body, customExportVars)
 	if err != nil {
 		return "", errors.Wrap(err, "Error getting Body:")
 	}
 
-	toArray, err := sliceFromTextOrFile(sourceRoot, params.ToText, params.To)
+	toArray, err := sliceFromTextOrFile(sourceRoot, params.ToText, params.To, customExportVars)
 	if err != nil {
 		return "", errors.Wrap(err, "Error getting to list:")
 	}
 	source.To = append(source.To, toArray...)
 
-	ccArray, err := sliceFromTextOrFile(sourceRoot, params.CcText, params.Cc)
+	ccArray, err := sliceFromTextOrFile(sourceRoot, params.CcText, params.Cc, customExportVars)
 	if err != nil {
 		return "", errors.Wrap(err, "Error getting cc list:")
 	}
 	source.Cc = append(source.Cc, ccArray...)
 
-	bccArray, err := sliceFromTextOrFile(sourceRoot, params.BccText, params.Bcc)
+	bccArray, err := sliceFromTextOrFile(sourceRoot, params.BccText, params.Bcc, customExportVars)
 	if err != nil {
 		return "", errors.Wrap(err, "Error getting cc list:")
 	}
@@ -110,7 +122,7 @@ func Execute(sourceRoot, version string, input []byte) (string, error) {
 			logger.Println("Getting headers")
 		}
 		var headersString string
-		headersString, err = readSource(sourceRoot, params.Headers)
+		headersString, err = readSource(sourceRoot, params.Headers, customExportVars)
 		if err != nil {
 			return "", errors.Wrap(err, "unable to read source file for headers")
 		}
@@ -194,7 +206,7 @@ func validateConfiguration(indata Input) error {
 	return nil
 }
 
-func replaceTokens(sourceString string) string {
+func replaceTokens(sourceString string, varsMap map[string]string) string {
 	var buildTokens = map[string]string{
 		"${BUILD_ID}":            os.Getenv("BUILD_ID"),
 		"${BUILD_NAME}":          os.Getenv("BUILD_NAME"),
@@ -203,32 +215,35 @@ func replaceTokens(sourceString string) string {
 		"${ATC_EXTERNAL_URL}":    os.Getenv("ATC_EXTERNAL_URL"),
 		"${BUILD_TEAM_NAME}":     os.Getenv("BUILD_TEAM_NAME"),
 	}
+	for k, v := range varsMap {
+		sourceString = strings.Replace(sourceString, k, v, -1)
+	}
 	for k, v := range buildTokens {
 		sourceString = strings.Replace(sourceString, k, v, -1)
 	}
 	return sourceString
 }
 
-func readSource(sourceRoot, sourcePath string) (string, error) {
+func readSource(sourceRoot, sourcePath string, customVarsMap map[string]string) (string, error) {
 	if !filepath.IsAbs(sourcePath) {
 		sourcePath = filepath.Join(sourceRoot, sourcePath)
 	}
 	bytes, err := ioutil.ReadFile(sourcePath)
-	return replaceTokens(string(bytes)), err
+	return replaceTokens(string(bytes), customVarsMap), err
 }
 
-func fromTextOrFile(sourceRoot, text, filePath string) (string, error) {
+func fromTextOrFile(sourceRoot, text, filePath string, customVarsMap map[string]string) (string, error) {
 	if text != "" {
-		return replaceTokens(text), nil
+		return replaceTokens(text, customVarsMap), nil
 
 	}
 	if filePath != "" {
-		return readSource(sourceRoot, filePath)
+		return readSource(sourceRoot, filePath, customVarsMap)
 	}
 	return "", nil
 }
 
-func sliceFromTextOrFile(sourceRoot, text, filePath string) ([]string, error) {
+func sliceFromTextOrFile(sourceRoot, text, filePath string, customVarsMap map[string]string) ([]string, error) {
 	var returnList []string
 	if text != "" {
 		listArray := strings.Split(text, ",")
@@ -237,7 +252,7 @@ func sliceFromTextOrFile(sourceRoot, text, filePath string) ([]string, error) {
 		}
 	}
 	if filePath != "" {
-		fileList, err := readSource(sourceRoot, filePath)
+		fileList, err := readSource(sourceRoot, filePath, customVarsMap)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error reading file %s", filePath)
 		}
@@ -249,4 +264,32 @@ func sliceFromTextOrFile(sourceRoot, text, filePath string) ([]string, error) {
 		}
 	}
 	return returnList, nil
+}
+
+func exportVarsInFile(sourceRoot, varsFile string, varsMap map[string]string) error {
+	if varsFile == "" {
+		return nil
+	}
+
+	inputFile := filepath.Join(sourceRoot, varsFile)
+	_, err := os.Stat(inputFile)
+	if os.IsNotExist(err) {
+		return fmt.Errorf("File %s does not exist in source directory %s", varsFile, sourceRoot)
+	}
+
+	f, err := ioutil.ReadFile(inputFile)
+	if err != nil {
+		return err
+	}
+	for _, s := range strings.Split(string(f), "\n") {
+		dataSlice := strings.Split(s, "=")
+		if len(dataSlice) > 0 {
+			val := strings.Trim(dataSlice[1], `"`)
+			if err := os.Setenv(dataSlice[0], val); err != nil {
+				return err
+			}
+			varsMap[fmt.Sprintf("${%s}", dataSlice[0])] = val
+		}
+	}
+	return nil
 }

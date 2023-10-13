@@ -115,6 +115,8 @@ This is an output-only resource, so `check` and `in` actions are no-ops.
 * `bcc_text`: *Optional.* The `,` delimited list of bcc addresses. `bcc_text` appends to any `bcc` in params or source
 * `debug`: *Optional.* If set to `"true"` (as a string) additional information send to stderr
 * `attachment_globs:` *Optional.* If provided will attach any file to the email that matches the glob path(s)
+* `custom_exports`: *Optional.* Relative path to a file containing name/value pairs (in the format key=value) which are exported in the environment and can be used in the subject or body (text or file) as ${<VARIABLE_NAME>}
+
 
 For example, a build plan might contain this:
 ```yaml
@@ -150,6 +152,25 @@ For example:
       subject_text: "Build finished: ${BUILD_PIPELINE_NAME}/${BUILD_JOB_NAME}/${BUILD_NAME}"
       body_text: "Build finished: ${ATC_EXTERNAL_URL}/teams/main/pipelines/${BUILD_PIPELINE_NAME}/jobs/${BUILD_JOB_NAME}/builds/${BUILD_NAME}"
 ```
+
+You can also use values defined in a file passed via the `custom_exports` parameter - In the example below we have a file containing values:
+
+``` 
+FOO=val
+BAR=val
+```
+and we pass the relative path to the file via the `custom_exports` parameter
+
+For example:
+
+```yaml
+  - put: send-an-email
+    params:
+      subject_text: "Build finished: ${BUILD_PIPELINE_NAME}/${BUILD_JOB_NAME}/${BUILD_NAME} - my custome value ${FOO}"
+      body_text: "Build finished: ${ATC_EXTERNAL_URL}/teams/main/pipelines/${BUILD_PIPELINE_NAME}/jobs/${BUILD_JOB_NAME}/builds/${BUILD_NAME}- my custom value ${BAR}"
+      custom_exports: file_containing_custom_values
+```
+
 
 #### HTML Email
 
